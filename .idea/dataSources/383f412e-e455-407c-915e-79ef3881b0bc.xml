@@ -51,8 +51,8 @@
     </role>
     <schema id="11" parent="2" name="public">
       <ObjectId>2200</ObjectId>
-      <IntrospectionTimestamp>2018-09-19.19:19:15.406</IntrospectionTimestamp>
-      <IntrospectionStateNumber>699</IntrospectionStateNumber>
+      <IntrospectionTimestamp>2018-11-06.09:10:49.176</IntrospectionTimestamp>
+      <IntrospectionStateNumber>1061</IntrospectionStateNumber>
       <Current>1</Current>
       <Visible>1</Visible>
     </schema>
@@ -71,7 +71,10 @@
     <schema id="16" parent="2" name="information_schema">
       <ObjectId>12648</ObjectId>
     </schema>
-    <sequence id="17" parent="11" name="videos_id_seq">
+    <schema id="17" parent="2" name="new_schema">
+      <ObjectId>17003</ObjectId>
+    </schema>
+    <sequence id="18" parent="11" name="videos_id_seq">
       <ObjectId>16587</ObjectId>
       <StateNumber>614</StateNumber>
       <SequenceIdentity>1..2147483647</SequenceIdentity>
@@ -79,54 +82,69 @@
       <CacheSize>1</CacheSize>
       <DataType>integer</DataType>
     </sequence>
-    <table id="18" parent="11" name="comments">
-      <ObjectId>16581</ObjectId>
-      <StateNumber>699</StateNumber>
+    <table id="19" parent="11" name="comments">
+      <ObjectId>16755</ObjectId>
+      <StateNumber>1061</StateNumber>
     </table>
-    <table id="19" parent="11" name="videos">
+    <table id="20" parent="11" name="videos">
       <ObjectId>16589</ObjectId>
-      <StateNumber>683</StateNumber>
+      <StateNumber>824</StateNumber>
     </table>
-    <column id="20" parent="18" name="comment_id">
+    <column id="21" parent="19" name="comment_id">
       <Position>1</Position>
-      <DataType>varchar(10485760)|0s</DataType>
-      <StateNumber>613</StateNumber>
+      <DataType>varchar|0s</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>825</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <column id="21" parent="18" name="video_id">
+    <column id="22" parent="19" name="video_id">
       <Position>2</Position>
-      <DataType>varchar(10485760)|0s</DataType>
-      <StateNumber>613</StateNumber>
+      <DataType>varchar|0s</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>826</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <column id="22" parent="18" name="comment_text">
+    <column id="23" parent="19" name="comment_text">
+      <Position>3</Position>
+      <DataType>varchar|0s</DataType>
+      <StateNumber>823</StateNumber>
+      <TypeId>1043</TypeId>
+    </column>
+    <column id="24" parent="19" name="comment_author">
       <Position>4</Position>
       <DataType>varchar|0s</DataType>
-      <StateNumber>635</StateNumber>
+      <NotNull>1</NotNull>
+      <StateNumber>827</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <column id="23" parent="18" name="comment_author">
+    <column id="25" parent="19" name="comment_date">
       <Position>5</Position>
       <DataType>varchar|0s</DataType>
       <NotNull>1</NotNull>
-      <StateNumber>636</StateNumber>
+      <StateNumber>828</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <column id="24" parent="18" name="comment_date">
+    <column id="26" parent="19" name="author_id">
       <Position>6</Position>
       <DataType>varchar|0s</DataType>
       <NotNull>1</NotNull>
-      <StateNumber>637</StateNumber>
+      <StateNumber>829</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <column id="25" parent="18" name="author_id">
+    <column id="27" parent="19" name="parent_id">
       <Position>7</Position>
       <DataType>varchar|0s</DataType>
-      <StateNumber>699</StateNumber>
+      <StateNumber>1060</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <foreign-key id="26" parent="18" name="comments_videos_video_id_fk">
-      <ObjectId>16612</ObjectId>
+    <column id="28" parent="19" name="real_text">
+      <Position>8</Position>
+      <DataType>varchar|0s</DataType>
+      <StateNumber>1061</StateNumber>
+      <TypeId>1043</TypeId>
+    </column>
+    <foreign-key id="29" parent="19" name="comments_videos_video_id_fk">
+      <ObjectId>16761</ObjectId>
       <ColNames>video_id</ColNames>
       <RefTableId>16589</RefTableId>
       <RefColPositions>1</RefColPositions>
@@ -134,14 +152,14 @@
       <RefKeyName>videos_video_id_pk</RefKeyName>
       <RefColNames>video_id</RefColNames>
     </foreign-key>
-    <column id="27" parent="19" name="video_id">
+    <column id="30" parent="20" name="video_id">
       <Position>1</Position>
       <DataType>varchar(30)|0s</DataType>
       <NotNull>1</NotNull>
       <StateNumber>627</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <column id="28" parent="19" name="id">
+    <column id="31" parent="20" name="id">
       <Position>2</Position>
       <DataType>integer|0s</DataType>
       <NotNull>1</NotNull>
@@ -150,90 +168,90 @@
       <TypeId>23</TypeId>
       <SequenceName>videos_id_seq</SequenceName>
     </column>
-    <column id="29" parent="19" name="video_title">
+    <column id="32" parent="20" name="video_title">
       <Position>3</Position>
       <DataType>varchar(10485760)|0s</DataType>
       <StateNumber>614</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <column id="30" parent="19" name="author">
+    <column id="33" parent="20" name="author">
       <Position>4</Position>
       <DataType>varchar(10485760)|0s</DataType>
       <StateNumber>614</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <column id="31" parent="19" name="publication_date">
+    <column id="34" parent="20" name="publication_date">
       <Position>5</Position>
       <DataType>varchar(10485760)|0s</DataType>
       <StateNumber>614</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <column id="32" parent="19" name="description">
+    <column id="35" parent="20" name="description">
       <Position>6</Position>
       <DataType>varchar(10485760)|0s</DataType>
       <StateNumber>614</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <column id="33" parent="19" name="view_count">
+    <column id="36" parent="20" name="view_count">
       <Position>7</Position>
       <DataType>bigint|0s</DataType>
       <StateNumber>614</StateNumber>
       <TypeId>20</TypeId>
     </column>
-    <column id="34" parent="19" name="likes_count">
+    <column id="37" parent="20" name="likes_count">
       <Position>8</Position>
       <DataType>bigint|0s</DataType>
       <StateNumber>614</StateNumber>
       <TypeId>20</TypeId>
     </column>
-    <column id="35" parent="19" name="dislikes_count">
+    <column id="38" parent="20" name="dislikes_count">
       <Position>9</Position>
       <DataType>bigint|0s</DataType>
       <StateNumber>614</StateNumber>
       <TypeId>20</TypeId>
     </column>
-    <column id="36" parent="19" name="comments_count">
+    <column id="39" parent="20" name="comments_count">
       <Position>10</Position>
       <DataType>bigint|0s</DataType>
       <StateNumber>614</StateNumber>
       <TypeId>20</TypeId>
     </column>
-    <column id="37" parent="19" name="tags">
+    <column id="40" parent="20" name="tags">
       <Position>11</Position>
       <DataType>varchar(10485760)|0s</DataType>
       <StateNumber>614</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <column id="38" parent="19" name="channel_id">
+    <column id="41" parent="20" name="channel_id">
       <Position>12</Position>
       <DataType>varchar(10485760)|0s</DataType>
       <StateNumber>614</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <column id="39" parent="19" name="channel_follovers_count">
+    <column id="42" parent="20" name="channel_follovers_count">
       <Position>13</Position>
       <DataType>integer|0s</DataType>
       <StateNumber>614</StateNumber>
       <TypeId>23</TypeId>
     </column>
-    <column id="40" parent="19" name="channel_video_count">
+    <column id="43" parent="20" name="channel_video_count">
       <Position>14</Position>
       <DataType>integer|0s</DataType>
       <StateNumber>614</StateNumber>
       <TypeId>23</TypeId>
     </column>
-    <column id="41" parent="19" name="channel_description">
+    <column id="44" parent="20" name="channel_description">
       <Position>15</Position>
       <DataType>varchar(10485760)|0s</DataType>
       <StateNumber>614</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <index id="42" parent="19" name="videos_video_id_pk">
+    <index id="45" parent="20" name="videos_video_id_pk">
       <ObjectId>16610</ObjectId>
       <ColNames>video_id</ColNames>
       <Unique>1</Unique>
     </index>
-    <key id="43" parent="19" name="videos_video_id_pk">
+    <key id="46" parent="20" name="videos_video_id_pk">
       <ObjectId>16611</ObjectId>
       <ColNames>video_id</ColNames>
       <UnderlyingIndexName>videos_video_id_pk</UnderlyingIndexName>

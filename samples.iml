@@ -10,6 +10,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="org.apache.poi:poi:4.0.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.apis:google-api-services-youtube:v3-rev182-1.22.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.api-client:google-api-client:1.22.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.oauth-client:google-oauth-client:1.22.0" level="project" />
@@ -32,6 +33,10 @@
     <orderEntry type="library" name="Maven: org.mortbay.jetty:jetty-util:6.1.26" level="project" />
     <orderEntry type="library" name="Maven: org.mortbay.jetty:servlet-api:2.5-20081211" level="project" />
     <orderEntry type="library" name="Maven: com.google.collections:google-collections:1.0" level="project" />
-    <orderEntry type="library" name="org.apache.poi:poi:4.0.0" level="project" />
+    <orderEntry type="library" name="jgraphx-v3.3.0.0" level="project" />
+    <orderEntry type="library" name="core-3.3.7" level="project" />
+    <orderEntry type="library" name="org.gephi:gephi-toolkit:0.9.1" level="project" />
+    <orderEntry type="library" name="gson-2.8.5" level="project" />
+    <orderEntry type="library" name="sax:sax:2.0.1" level="project" />
   </component>
 </module>
