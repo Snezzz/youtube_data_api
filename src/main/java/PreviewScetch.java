@@ -31,14 +31,13 @@ public class PreviewScetch extends JPanel implements MouseListener, MouseWheelLi
     private final Vector ref=new Vector();
     private final Vector lastMove=new Vector();
     //Utils
-    private final RefreshLoop refreshLoop;
+    private final RefreshLoop refreshLoop= new RefreshLoop();
     private Timer wheelTimer;
     private boolean inited;
     private final boolean isRetina;
     public static int w=0;
     public PreviewScetch(G2DTarget target) {
         this.target=target;
-        refreshLoop = new RefreshLoop();
         previewController = Lookup.getDefault().lookup(PreviewController.class);
         isRetina = false;
         System.out.println("созданный target="+this.target);

@@ -58,7 +58,7 @@ public class Search {
     /**
      * Global instance of the max number of videos we want returned (50 = upper limit per page).
      */
-    private static final long NUMBER_OF_VIDEOS_RETURNED = 2;
+    private static final long NUMBER_OF_VIDEOS_RETURNED = 20;
 
     /**
      * Global instance of Youtube object to make all API requests.

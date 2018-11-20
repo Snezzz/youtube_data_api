@@ -48,6 +48,12 @@
             <artifactId>google-api-services-youtubereporting</artifactId>
             <version>${project.youtube.reporting.version}</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.thoughtworks.xstream/xstream -->
+        <dependency>
+            <groupId>com.thoughtworks.xstream</groupId>
+            <artifactId>xstream</artifactId>
+            <version>1.4.7</version>
+        </dependency>
 
         <!-- This dependency is only used for the Topics API sample, which requires the Jackson JSON parser -->
         <dependency>

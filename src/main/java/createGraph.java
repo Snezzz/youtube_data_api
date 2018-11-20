@@ -353,6 +353,18 @@ public class createGraph extends JFrame {
                 //дуга
                 Edge e1 = graphModel.factory().newEdge(n2, n0, 0, 1.0, true);
                 e1.setWeight(0.1);
+
+                if(Main.comment_count.containsKey(node_from+"!"+node_to)){
+                  //  e1.setWeight(Main.comment_count.get(node_from+"!"+node_to));
+                    e1.setLabel(String.valueOf(Main.comment_count.get(node_from+"!"+node_to)));
+                }
+                else if(Main.comment_count.containsKey(node_to+"!"+node_from)){
+                   // e1.setWeight(Main.comment_count.get(node_to+"!"+node_from));
+                    e1.setLabel(String.valueOf(Main.comment_count.get(node_to+"!"+node_from)));
+                }
+                else{
+                    System.out.println("нет"+"node_from="+node_from+";node_to="+node_to);
+                }
                 directedGraph.addNode(n2);
                 directedGraph.addEdge(e1);
             }
@@ -430,6 +442,9 @@ public class createGraph extends JFrame {
         PreviewModel previewModel = previewController.getModel();
         //настройки
         previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE); //отображение id вершин
+        previewModel.getProperties().putValue(PreviewProperty.EDGE_LABEL_FONT,previewModel.getProperties().getFontValue(PreviewProperty.NODE_LABEL_FONT).deriveFont(8));
+        //previewModel.getProperties().putValue(PreviewProperty.EDGE_LABEL_COLOR,Color.black);
+        previewModel.getProperties().putValue(PreviewProperty.SHOW_EDGE_LABELS, Boolean.TRUE); //отображение id вершин
         previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, Boolean.FALSE);
         previewModel.getProperties().putValue(PreviewProperty.CATEGORY_NODE_LABELS, Boolean.TRUE);
 
