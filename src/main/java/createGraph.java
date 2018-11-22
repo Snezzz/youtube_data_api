@@ -68,7 +68,7 @@ public class createGraph extends JFrame {
 
         //анализ
         get_analysis(graphModel);
-        write_results();
+       // write_results();
         //укладка графа по заданному алгоритму
         stowage("YifanHu",graphModel);
 
