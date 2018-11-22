@@ -22,6 +22,8 @@ import org.openide.util.Lookup;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.io.*;
 import java.util.Iterator;
 import java.util.Map;
@@ -32,7 +34,6 @@ public class createGraph extends JFrame {
 
 
     public static DirectedGraph directedGraph;
-    //public static  Workspace workspace,workspace2;
     private Map<String,Node> points;
     private static Map<String,Double> betweeness_centrality;
     private static Map<String,Double> closeness_centrality;
@@ -43,12 +44,10 @@ public class createGraph extends JFrame {
     private static Map<String,Double> hub;
     private static Map<String,Double> DEGREE;
     private static Map<String,Double> WEIGHTEDDEGREE;
-    //Delimiter used in CSV file
     private static final String COMMA_DELIMITER = ",";
     private static final String NEW_LINE_SEPARATOR = "\n";
     private static final String FILE_HEADER = "node_id,value";
     public static  Workspace workspace;
-    public static int col=0;
 
 
 
@@ -60,7 +59,6 @@ public class createGraph extends JFrame {
         Main.pc.newProject();
         workspace = Main.pc.getCurrentWorkspace();
 
-       //importController.process(container, new DefaultProcessor(), workspace);
         //модель графа
         GraphModel graphModel = Lookup.getDefault()
                 .lookup(GraphController.class).getGraphModel();
@@ -70,7 +68,7 @@ public class createGraph extends JFrame {
 
         //анализ
         get_analysis(graphModel);
-       // write_results();
+        write_results();
         //укладка графа по заданному алгоритму
         stowage("YifanHu",graphModel);
 
@@ -224,7 +222,7 @@ public class createGraph extends JFrame {
         Iterator<Map.Entry<String, Double>> entries = from.entrySet().iterator();
         FileWriter file=null;
         try{
-            file=new FileWriter(file_name+".csv");
+            file=new FileWriter("/results/"+file_name+".csv");
             file.append(FILE_HEADER.toString());
             file.append(NEW_LINE_SEPARATOR);
             while(entries.hasNext()){
@@ -288,7 +286,7 @@ public class createGraph extends JFrame {
             layout.resetPropertiesValues();
             layout.setOptimalDistance(200f);
             layout.initAlgo();
-            for (int i = 0; i < 100 && layout.canAlgo(); i++) {
+            for (int i = 0; i < 200 && layout.canAlgo(); i++) {
                 layout.goAlgo();
             }
         } else if(type.equals("OpenOrd")) {
@@ -296,7 +294,7 @@ public class createGraph extends JFrame {
             layout.setGraphModel(graphModel);
             layout.resetPropertiesValues();
             layout.initAlgo();
-            for (int i = 0; i < 100 && layout.canAlgo(); i++) {
+            for (int i = 0; i < 200 && layout.canAlgo(); i++) {
                 layout.goAlgo();
             }
         }
@@ -308,6 +306,8 @@ public class createGraph extends JFrame {
         Iterator iterator = Main.nodes_map.entrySet().iterator();
         directedGraph = graphModel.getDirectedGraph();
         points = new TreeMap<String, Node>();
+
+        //перебираем все вершины и их соседей
         while (iterator.hasNext()) {
             Map.Entry pair = (Map.Entry) iterator.next();
             String node_to = pair.getKey().toString();
@@ -365,7 +365,9 @@ public class createGraph extends JFrame {
                 else{
                     System.out.println("нет"+"node_from="+node_from+";node_to="+node_to);
                 }
+                //добавляем вершину
                 directedGraph.addNode(n2);
+                //добавляем ребро
                 directedGraph.addEdge(e1);
             }
 
@@ -428,10 +430,7 @@ public class createGraph extends JFrame {
         Palette palette2 = PaletteManager.getInstance().randomPalette(partition2.size());
         partition2.setColors(palette2.getColors());
         ac.transform(func2);
-
         System.out.println("node_count:"+directedGraph.getNodeCount());
-
-
     }
 
     //отображение
@@ -443,16 +442,14 @@ public class createGraph extends JFrame {
         //настройки
         previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE); //отображение id вершин
         previewModel.getProperties().putValue(PreviewProperty.EDGE_LABEL_FONT,previewModel.getProperties().getFontValue(PreviewProperty.NODE_LABEL_FONT).deriveFont(8));
-        //previewModel.getProperties().putValue(PreviewProperty.EDGE_LABEL_COLOR,Color.black);
         previewModel.getProperties().putValue(PreviewProperty.SHOW_EDGE_LABELS, Boolean.TRUE); //отображение id вершин
         previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, Boolean.FALSE);
         previewModel.getProperties().putValue(PreviewProperty.CATEGORY_NODE_LABELS, Boolean.TRUE);
 
         target = (G2DTarget) previewController
                 .getRenderTarget(RenderTarget.G2D_TARGET);
-      //  PreviewScetch.target=target;
         //добавляем обработчик событий + paintComponent
-        PreviewScetch previewSketch = new PreviewScetch(target);
+        final PreviewScetch previewSketch = new PreviewScetch(target);
         previewController.render(target);
         previewController.refreshPreview();
 
@@ -462,9 +459,15 @@ public class createGraph extends JFrame {
         //сюда накладываем тот объект, что отображается на окне
         frame.add(previewSketch, BorderLayout.CENTER);
         frame.setSize(600,700);
-        target.refresh();
+
+        frame.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                previewSketch.resetZoom();
+            }
+        });
         frame.setVisible(true);
-        previewSketch.resetZoom();
+        target.refresh();
         System.out.println("node_count:"+directedGraph.getNodeCount());
        // target.refresh();
         //previewSketch.resetZoom();

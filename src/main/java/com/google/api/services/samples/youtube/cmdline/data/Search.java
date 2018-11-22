@@ -58,7 +58,7 @@ public class Search {
     /**
      * Global instance of the max number of videos we want returned (50 = upper limit per page).
      */
-    private static final long NUMBER_OF_VIDEOS_RETURNED = 20;
+    private static final long NUMBER_OF_VIDEOS_RETURNED = 1;
 
     /**
      * Global instance of Youtube object to make all API requests.
@@ -108,6 +108,7 @@ public class Search {
 
             //заносим настройки в запрос - API ключ
             apiKey = properties.getProperty("youtube.apikey");
+
             search.setKey(apiKey);
             search.setQ(queryTerm); //передаем сам запрос
 
