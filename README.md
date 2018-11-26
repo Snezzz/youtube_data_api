@@ -17,3 +17,4 @@
    ### Modularity, k=1, v=2
    ![Screenshot](results/результат_5.png)
 ## Сборка проекта
+[![Build Status](https://travis-ci.org/Snezzz/youtube_data_api.svg?branch=master)](https://travis-ci.org/Snezzz/youtube_data_api)
