@@ -5,8 +5,6 @@ cache:
    - $HOME/.m2
 os:
   - linux
-  - windows
-
 jdk:
   - oraclejdk8
   - oraclejdk9

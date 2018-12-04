@@ -1,0 +1,11 @@
+# Выбираем контейнер с необходимыми Rust компонентами
+os:  windows
+# Выключаем стандартный сборщик AppVeyor
+build: false
+
+# Используем специальный тестовый скрипт
+test_script:
+  # Собираем
+  - cargo build --verbose
+  # Запускаем тесты
+  - cargo test --verbose
