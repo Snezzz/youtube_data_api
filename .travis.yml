@@ -5,3 +5,18 @@ cache:
    - $HOME/.m2
 os:
   - linux
+  - windows
+
+jdk:
+  - oraclejdk8
+  - oraclejdk9
+  - openjdk8
+  - openjdk10
+  - openjdk11
+
+notifications:
+  email:
+    recipients:
+      - snezha_00_97@mail.ru
+    on_success: never
+    on_failure: always
