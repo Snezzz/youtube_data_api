@@ -1,3 +1,5 @@
+## Сборка проекта
+[![Build Status](https://travis-ci.org/Snezzz/youtube_data_api.svg?branch=master)](https://travis-ci.org/Snezzz/youtube_data_api)
 # Проект по дипломной работе
   Проект посвящен анализу AD HOC дискусский в социальной сети Youtube  
     Язык программирования: Java   
@@ -16,5 +18,4 @@
    ![Screenshot](results/результат_4.png)
    ### Modularity, k=1, v=2
    ![Screenshot](results/результат_5.png)
-## Сборка проекта
-[![Build Status](https://travis-ci.org/Snezzz/youtube_data_api.svg?branch=master)](https://travis-ci.org/Snezzz/youtube_data_api)
+
