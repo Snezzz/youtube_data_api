@@ -1,4 +1,3 @@
-language: java
 
 image: Visual Studio 2015
 clone_folder: C:\D # выбираем локальную директорию для клонирования
@@ -9,4 +8,3 @@ platform:
     # будем гонять CI на amd64 и x86...
     - x64
     - x86
-    
