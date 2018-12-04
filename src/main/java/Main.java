@@ -304,7 +304,7 @@ public class Main {
 
         //запись результата в документ(требовалось ранее)
         //   write(new_map);
-/*
+
         //добавление данных о видео в БД
         load_data("postgres", "qwerty", new_map, false, null);
         //загружаем комментарии на базу данных: для каждого видео - отдельный запрос
@@ -319,7 +319,7 @@ public class Main {
         }
         writer.write("}");
         writer.close();
-*/
+
     }
 
     private static void get_comments_count(String user,String password,String videoID,

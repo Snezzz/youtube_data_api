@@ -78,7 +78,7 @@ public class Search {
     public static String queryTerm;
     public static String apiKey;
 
-    public Search() throws IOException {
+    public Search() throws IOException {public
         // create_XLS();
         //Считывает api ключ пользователя
         Properties properties = new Properties();
