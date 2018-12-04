@@ -1,11 +1,12 @@
-# Выбираем контейнер с необходимыми Rust компонентами
-os:  windows
-# Выключаем стандартный сборщик AppVeyor
-build: false
+language: java
 
-# Используем специальный тестовый скрипт
-test_script:
-  # Собираем
-  - cargo build --verbose
-  # Запускаем тесты
-  - cargo test --verbose
+image: Visual Studio 2015
+clone_folder: C:\D # выбираем локальную директорию для клонирования
+shallow_clone: true
+
+
+platform:
+    # будем гонять CI на amd64 и x86...
+    - x64
+    - x86
+    
