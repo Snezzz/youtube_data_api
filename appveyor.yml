@@ -8,7 +8,7 @@ install:
   # Устанавливаем стабильный Rust с MSVC ABI
   - rustup-init -yv --default-toolchain stable --default-host x86_64-pc-windows-msvc
   # Устанавливаем пути до компонентов Rust
-  - set PATH=%PATH%;%USERPROFILE%\.cargo\bin
+  - set PATH=%PATH%;\.cargo\bin
   # Выводим версии
   - rustc -vV
   - cargo -vV
