@@ -1,1 +1,2 @@
-language: rust
+language: java
+sudo: false
