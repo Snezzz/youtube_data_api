@@ -1,6 +1,6 @@
 ## Сборка проекта
 [![Build Status](https://travis-ci.org/Snezzz/youtube_data_api.svg?branch=master)](https://travis-ci.org/Snezzz/youtube_data_api)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/youtube_data_api)](https://ci.appveyor.com/api/projects/status/github/youtube_data_api)
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/Snezzz/youtube_data_api)](https://ci.appveyor.com/api/projects/status/github/Snezzz/youtube_data_api)
 # Проект по дипломной работе
   Проект посвящен анализу AD HOC дискусский в социальной сети Youtube  
     Язык программирования: Java   
