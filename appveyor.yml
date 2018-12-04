@@ -1,46 +1,11 @@
-image:
-- Visual Studio 2017
-- ps: |
-    if ($isLinux) {
-      Write-Host "This is Linux!"
-    } else {
-      Write-Host "This is NOT a Linux!"
-    }
-
-environment:
-  matrix:
-    - arch: x86
-      compiler: msvc2015
-    - arch: x64
-      compiler: msvc2015
-    - arch: x86
-      compiler: msvc2017
-    - arch: x64
-      compiler: msvc2017
-
-platform:
-  - x64
-
-install:
-  # Download ninja
-  - cmd: mkdir C:\ninja-build
-  - ps: (new-object net.webclient).DownloadFile('https://github.com/mesonbuild/cidata/raw/master/ninja.exe', 'C:\ninja-build\ninja.exe')
-  # Set paths to dependencies (based on architecture)
-  - cmd: if %arch%==x86 (set PYTHON_ROOT=C:\python37) else (set PYTHON_ROOT=C:\python37-x64)
-  # Print out dependency paths
-  - cmd: echo Using Python at %PYTHON_ROOT%
-  # Add neccessary paths to PATH variable
-  - cmd: set PATH=%cd%;C:\ninja-build;%PYTHON_ROOT%;%PYTHON_ROOT%\Scripts;%PATH%
-  # Install meson
-  - cmd: pip install meson
-  # Set up the build environment
-  - cmd: if %compiler%==msvc2015 ( call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %arch% )
-  - cmd: if %compiler%==msvc2017 ( call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %arch% )
-
-build_script:
-  - cmd: echo Building on %arch% with %compiler%
-  - cmd: meson --backend=ninja builddir
-  - cmd: ninja -C builddir
-
-test_script:
-  - cmd: ninja -C builddir test
+language: java
+install: mvn install -DskipTests=true
+script: mvn test
+jdk:
+  - oraclejdk8
+notifications:
+  webhooks:
+    urls:
+      - "https://webhooks.gitter.im/e/ec3127975d8a2b8f11d0"
+    on_success: always  # options: [always|never|change] default: always
+    on_failure: always  # options: [always|never|change] default: always
