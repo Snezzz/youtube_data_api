@@ -1,20 +1,25 @@
+#задаем язык программирования
 language: java
-sudo: false
+
+#кэш сборки для сохранения файлов / папок между сборками
 cache:
  directories:
    - $HOME/.m2
+#операционная система, на которой мы тестируем сборку проекта  
 os:
   - linux
+#JVM images
 jdk:
   - oraclejdk8
   - oraclejdk9
   - openjdk8
   - openjdk10
   - openjdk11
-
+  
+#уведомление при успехе, провале на почту
 notifications:
   email:
     recipients:
       - snezha_00_97@mail.ru
-    on_success: never
-    on_failure: always
+    on_success: Все ок!
+    on_failure: Все плохааа
