@@ -23,7 +23,5 @@ test_script:
 notifications:
   provider: Email
   to: snezha_00_97@mail.ru
-  on_success:
-   message:'You are the best!'
-  on_failure: 
-   message:'You have many problems...'
+  message:'You are the best!'
+  on_success: true
