@@ -21,9 +21,10 @@ test_script:
   - mvn --batch-mode test verify
 #уведомление, все норм или все плоха  
 notifications:
-  provider: Email
+  - provider: Email
   to: 
   - snezha_00_97@mail.ru
-  message:'{{You are the best!}}'
+  subject: 'Build {{status}}'
+  message: "{{message}}, {{commitId}}" 
   on_build_success: true
     on_build_failure: false
