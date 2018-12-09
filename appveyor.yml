@@ -21,7 +21,7 @@ test_script:
   - mvn --batch-mode test verify
 #уведомление, все норм или все плоха  
 notifications:
-  - provider: Email
+  provider: Email
   to: 
   - snezha_00_97@mail.ru
   subject: 'Build {{status}}'
