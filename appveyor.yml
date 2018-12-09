@@ -25,6 +25,6 @@ notifications:
   to: 
   - snezha_00_97@mail.ru
   subject: 'Build {{status}}'
-  message: "{{message}}, {{commitId}}" 
+  message: "hey" 
   on_build_success: true
     on_build_failure: false
