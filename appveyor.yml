@@ -1,14 +1,28 @@
+#сборка платформы. Здесь было использовано два процессора
 platform:
   - x86
   - x64
+#среда разработки, указывается то, что необходимо для сборки проекта 
 environment:
   matrix:
     - JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+#то, что запускается сразу после клонирования    
 install:
-  # Log versions for debugging
+  # Вывод версий для дебага
   - java -version
   - mvn --version
+before_build: echo 'I'm starting building!'
+after_build: echo 'Build have finished'
+#запуск скрипта сборки проекта, если не берется по умолчанию MSBuild
 build_script:
   - mvn --batch-mode -DskipTests package
+#запуск собственного теста вместо автоматического  
 test_script:
   - mvn --batch-mode test verify
+#уведомление, все норм или все плоха  
+notifications:
+  email:
+    recipients:
+      - snezha_00_97@mail.ru
+    on_success: "You are the best!"
+    on_failure: "You have many problems..."
