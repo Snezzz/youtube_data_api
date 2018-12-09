@@ -22,6 +22,7 @@ test_script:
 #уведомление, все норм или все плоха  
 notifications:
   provider: Email
-  to: snezha_00_97@mail.ru
+  to: 
+  - snezha_00_97@mail.ru
   message:'You are the best!'
   on_success: true
