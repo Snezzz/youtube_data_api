@@ -19,6 +19,6 @@ build_script:
 #запуск собственного теста вместо автоматического  
 test_script:
   - mvn --batch-mode test verify
+#кэш сборки для сохранения файлов / папок между сборками  
 cache:
-- C:\maven\
 - C:\Users\appveyor\.m2
