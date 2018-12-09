@@ -21,8 +21,7 @@ test_script:
   - mvn --batch-mode test verify
 #уведомление, все норм или все плоха  
 notifications:
-  email:
-    recipients:
-      - snezha_00_97@mail.ru
-    on_success: You are the best!
-    on_failure: You have many problems...
+  provider: Email
+  to: snezha_00_97@mail.ru
+  on_success: You are the best!
+  on_failure: You have many problems...
