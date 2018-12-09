@@ -11,8 +11,8 @@ install:
   # Вывод версий для дебага
   - java -version
   - mvn --version
-before_build: echo 'I'm starting building!'
-after_build: echo 'Build have finished'
+before_build: echo I'm starting building!
+after_build: echo Build has finished
 #запуск скрипта сборки проекта, если не берется по умолчанию MSBuild
 build_script:
   - mvn --batch-mode -DskipTests package
