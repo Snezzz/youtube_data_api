@@ -9,7 +9,7 @@
   * Для сборки: версия Java не ниже 1.8 
 ### Сборка из исходников:  
 1.Установите Java  
-2.Установите Apach Maven (http://maven.apache.org)  
+2.Установите Apache Maven (http://maven.apache.org)  
 3.В терминале: ```mvn compile```  
 4.```mvn assembly:single```  
 
