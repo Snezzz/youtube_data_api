@@ -16,6 +16,7 @@ import org.gephi.layout.plugin.force.StepDisplacement;
 import org.gephi.layout.plugin.force.yifanHu.YifanHuLayout;
 import org.gephi.layout.plugin.openord.OpenOrdLayout;
 import org.gephi.preview.api.*;
+import org.gephi.preview.types.EdgeColor;
 import org.gephi.project.api.Workspace;
 import org.gephi.statistics.plugin.*;
 import org.openide.util.Lookup;
@@ -440,11 +441,14 @@ public class createGraph extends JFrame {
                 Lookup.getDefault().lookup(PreviewController.class);
         PreviewModel previewModel = previewController.getModel();
         //настройки
-        previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE); //отображение id вершин
+       // previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE); //отображение id вершин
         previewModel.getProperties().putValue(PreviewProperty.EDGE_LABEL_FONT,previewModel.getProperties().getFontValue(PreviewProperty.NODE_LABEL_FONT).deriveFont(8));
         previewModel.getProperties().putValue(PreviewProperty.SHOW_EDGE_LABELS, Boolean.TRUE); //отображение id вершин
         previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, Boolean.FALSE);
         previewModel.getProperties().putValue(PreviewProperty.CATEGORY_NODE_LABELS, Boolean.TRUE);
+        previewModel.getProperties().putValue(PreviewProperty.BACKGROUND_COLOR,Color.white);
+        previewModel.getProperties().putValue(PreviewProperty.EDGE_COLOR,
+                new EdgeColor(Color.BLACK));
 
         target = (G2DTarget) previewController
                 .getRenderTarget(RenderTarget.G2D_TARGET);

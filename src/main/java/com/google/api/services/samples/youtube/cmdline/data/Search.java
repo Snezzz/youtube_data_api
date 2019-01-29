@@ -1,4 +1,4 @@
-/*
+package com.google.api.services.samples.youtube.cmdline.data;/*
  * Copyright (c) 2012 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -12,14 +12,10 @@
  * the License.
  */
 
-package com.google.api.services.samples.youtube.cmdline.data;
+
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.samples.youtube.cmdline.Auth;
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.SearchListResponse;
@@ -40,34 +36,12 @@ import java.util.Properties;
  */
 public class Search {
 
-    /**
-     * Global instance properties filename.
-     */
     private static String PROPERTIES_FILENAME = "youtube.properties";
-
-    /**
-     * Global instance of the HTTP transport.
-     */
-    private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-
-    /**
-     * Global instance of the JSON factory.
-     */
-    private static final JsonFactory JSON_FACTORY = new JacksonFactory();
-
-    /**
-     * Global instance of the max number of videos we want returned (50 = upper limit per page).
-     */
-    private static final long NUMBER_OF_VIDEOS_RETURNED = 2;
-
-    /**
-     * Global instance of Youtube object to make all API requests.
-     */
+    private static long NUMBER_OF_VIDEOS_RETURNED;
     public static YouTube youtube;
 
-
     /**
-     * Initializes YouTube object to search for videos on YouTube (Youtube.Search.List). The program
+     * Initializes YouTube object to search for videos on YouTube (Youtube.com.google.api.services.samples.youtube.cmdline.data.Search.List). The program
      * then prints the names and thumbnails of each of the videos (only first 50 videos).
      *
      * @param args command line args.
@@ -79,10 +53,13 @@ public class Search {
     public static String apiKey;
 
     public Search() throws IOException {
+
         // create_XLS();
         //Считывает api ключ пользователя
         Properties properties = new Properties();
+
         List<String> scopes = Lists.newArrayList("https://www.googleapis.com/auth/youtube.force-ssl");
+
         try {
             InputStream in = Search.class.getResourceAsStream("/" + PROPERTIES_FILENAME);
             properties.load(in);
@@ -97,12 +74,12 @@ public class Search {
              * The YouTube object is used to make all API requests. The last argument is required, but
              * because we don't need anything initialized when the HttpRequest is initialized, we override
              * the interface and provide a no-op function.
-             */
+            */
             Credential credential = Auth.authorize(scopes, "commentthreads");
             youtube = new YouTube.Builder(Auth.HTTP_TRANSPORT, Auth.JSON_FACTORY, credential).setApplicationName("youtube-cmdline-search-sample").build();
             //1.Получаем данные для запроса
             queryTerm = getInputQuery();
-
+            System.out.println("query="+queryTerm);
             //настраиваем GET-запрос на ютуб
             YouTube.Search.List search = youtube.search().list("id,snippet");
 
@@ -133,6 +110,7 @@ public class Search {
         } catch (Throwable t) {
             t.printStackTrace();
         }
+
     }
 
     /*
@@ -141,9 +119,14 @@ public class Search {
     private static String getInputQuery() throws IOException {
 
         String inputQuery = "";
+        String encoding = System.getProperty("console.encoding", "utf-8");
+        BufferedReader bReader = new BufferedReader(new InputStreamReader(System.in,encoding));
 
-        System.out.print("Please enter a search term: ");
-        BufferedReader bReader = new BufferedReader(new InputStreamReader(System.in));
+        System.out.print("Введите максимальное количество обрабатываемого видео:");
+
+        NUMBER_OF_VIDEOS_RETURNED = Integer.valueOf(bReader.readLine());
+
+        System.out.print("Введите запрос: ");
         inputQuery = bReader.readLine();
 
         if (inputQuery.length() < 1) {

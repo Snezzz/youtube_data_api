@@ -218,7 +218,7 @@ public class GeolocationSearch {
      *
      * @param iteratorVideoResults Iterator of Videos to print
      *
-     * @param query Search query (String)
+     * @param query com.google.api.services.samples.youtube.cmdline.data.Search query (String)
      */
     private static void prettyPrint(Iterator<Video> iteratorVideoResults, String query) {
 

@@ -1,20 +1,12 @@
-language: java
-sudo: false
-cache:
- directories:
-   - $HOME/.m2
-os:
-  - linux
-jdk:
-  - oraclejdk8
-  - oraclejdk9
-  - openjdk8
-  - openjdk10
-  - openjdk11
-
-notifications:
-  email:
-    recipients:
-      - snezha_00_97@mail.ru
-    on_success: never
-    on_failure: always
+environment:
+  matrix:
+    #- JAVA_HOME: C:\Program Files\Java\jdk1.7.0
+    - JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+install:
+  # Log versions for debugging
+  - java -version
+  - mvn --version
+build_script:
+  - mvn --batch-mode -DskipTests package
+test_script:
+  - mvn --batch-mode test verify

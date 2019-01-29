@@ -4,13 +4,6 @@ import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.*;
 import com.google.gson.Gson;
 import org.apache.commons.collections4.list.TreeList;
-import org.apache.poi.hssf.usermodel.HSSFCellStyle;
-import org.apache.poi.hssf.usermodel.HSSFSheet;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
-import org.apache.poi.ss.usermodel.Row;
 import org.gephi.preview.api.G2DTarget;
 import org.gephi.project.api.ProjectController;
 import org.joda.time.Instant;
@@ -32,7 +25,7 @@ import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.google.api.services.samples.youtube.cmdline.data.Search.*;
+
 
 //import com.google.api.services.samples.youtube.cmdline.data.Search;
 
@@ -72,7 +65,8 @@ public class Main {
 
         //create_XLS();
 
-        Search search = new Search(); //делаем запрос
+        Search search; //делаем запрос
+        search = new Search();
         double time_before= System.currentTimeMillis();
         List<SearchResult> result = search.searchResultList; //получаем результат
         comments = new HashMap<String, Map<String, Map<String, String>>>();
@@ -82,11 +76,11 @@ public class Main {
         //если список не пуст, выводим
         if (result != null) {
             //1.собираем все id видео из полученного списка для дальнейшего получения данных
-            get_video_id(result.iterator(), queryTerm);
-            YouTube.Videos.List videosListByIdRequest = youtube.videos().list("id,statistics," +
+            get_video_id(result.iterator(), Search.queryTerm);
+            YouTube.Videos.List videosListByIdRequest = Search.youtube.videos().list("id,statistics," +
                     "snippet,recordingDetails");
             //2.получаем всю необходимую информацию
-            get_info(videosListByIdRequest, comments, apiKey);
+            get_info(videosListByIdRequest, comments, Search.apiKey);
         }
         out.writeEndDocument();
         out.close();
@@ -152,7 +146,7 @@ public class Main {
     //метод сбора id видео из всего списка = 1 запрос
     private static void get_video_id(Iterator<SearchResult> iteratorSearchResults, String query) {
         if (!iteratorSearchResults.hasNext()) {
-            System.out.println(" There aren't any results for your query.");
+         //   System.out.println(" There aren't any results for your query.");
         }
 //перебираем список видео
         while (iteratorSearchResults.hasNext()) {
@@ -196,7 +190,7 @@ public class Main {
             test(map.get("title"));
 
             //второй запрос - данные об авторе(канале) данного видео
-            YouTube.Channels.List channelsList=youtube.channels().list("statistics,snippet,status,brandingSettings,localizations");
+            YouTube.Channels.List channelsList= Search.youtube.channels().list("statistics,snippet,status,brandingSettings,localizations");
             channelsList.setId(map.get("channel_id"));
             channelsList.setKey(apiKey);
             ChannelListResponse listResponse2 = channelsList.execute();
@@ -258,7 +252,7 @@ public class Main {
             comments_count=map.get("comments_count");
             if(!map.get("comments_count").equals("0")) {
 
-               CommentThreadListResponse videoCommentsListResponse = youtube.commentThreads()
+               CommentThreadListResponse videoCommentsListResponse = Search.youtube.commentThreads()
                        .list("id,snippet").setVideoId(id).setTextFormat("plainText")
                        .setMaxResults((long) 100)
                        .execute();
@@ -269,7 +263,7 @@ public class Main {
 
                //перебираем все страницы = следующие запросы
                do {
-                   videoCommentsListResponse = youtube.commentThreads()
+                   videoCommentsListResponse = Search.youtube.commentThreads()
                            .list("id,snippet").setVideoId(id).setTextFormat("plainText")
                            .setPageToken(nextPage)
                            .setMaxResults((long) 100).execute();
@@ -306,20 +300,19 @@ public class Main {
         //   write(new_map);
 
         //добавление данных о видео в БД
-        load_data("postgres", "qwerty", new_map, false, null);
+       // load_data("postgres", "qwerty", new_map, false, null);
         //загружаем комментарии на базу данных: для каждого видео - отдельный запрос
         FileWriter writer = new FileWriter("example.json");
         writer.write("{");
         Map <String,Integer> video_comments;
         for (Map.Entry<String, Map<String, Map<String, String>>> entry : comments.entrySet()) {
-            load_data("postgres", "qwerty", entry.getValue(), true, entry.getKey());
-            video_comments=new HashMap<String, Integer>();
-            get_comments_count("postgres", "qwerty",entry.getKey(),video_comments);
+           // load_data("postgres", "qwerty", entry.getValue(), true, entry.getKey());
+            //video_comments=new HashMap<String, Integer>();
+            //get_comments_count("postgres", "qwerty",entry.getKey(),video_comments);
             create_json(writer,entry.getValue());
         }
         writer.write("}");
         writer.close();
-
     }
 
     private static void get_comments_count(String user,String password,String videoID,
@@ -495,7 +488,7 @@ public class Main {
                 nodes_map.put(author_id, data); //author_id - адрес автора комментария
 
                 //ответы(дополняется map)
-                CommentListResponse commentsListResponse = youtube.comments().list("snippet")
+                CommentListResponse commentsListResponse = Search.youtube.comments().list("snippet")
                         .setParentId(videoComment.getId()).execute();
 
                 get_replies(snippet, id, author_id, videoComment.getId(), nodes, map);
@@ -521,7 +514,7 @@ public class Main {
 
         //долго
 
-        CommentListResponse commentsListResponse = youtube.comments().list("snippet")
+        CommentListResponse commentsListResponse = Search.youtube.comments().list("snippet")
                 .setParentId(id).execute();
         List<Comment> comments = commentsListResponse.getItems();
 
@@ -534,7 +527,7 @@ public class Main {
         String parent_id=id;
         //String parent_id=comment_author_id;
         if (comments.isEmpty()) {
-            System.out.println("There aren't comment replies.");
+            //System.out.println("There aren't comment replies.");
         } else {
 //все ответы
             //out.writeStartElement("Answers");
@@ -813,6 +806,7 @@ public class Main {
     }
 
 }
+/*
     private static void create_XLS() throws IOException {
         Connection c;
         Statement stmt;
@@ -861,7 +855,7 @@ public class Main {
             1.Если мы еще не рассматривали данную вершину, создаем для нее новый список ссылающихся
             Если рассматривали, заполняем предыдущий set смежных вершин
              2.обновляем карту
-            */
+
             String prev="";
             while (rs.next()) {
 
@@ -987,7 +981,7 @@ public class Main {
         workbook.write(outFile);
 
     }
-
+*/
 //выявление тегов из названия видео
     private static void test(String testString) {
         Pattern p = Pattern.compile("\\S+");
