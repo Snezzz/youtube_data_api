@@ -1,4 +1,5 @@
 import com.google.api.client.util.DateTime;
+import com.google.api.services.samples.youtube.cmdline.data.ChannelVideo;
 import com.google.api.services.samples.youtube.cmdline.data.Search;
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.*;
@@ -64,7 +65,7 @@ public class Main {
         out.writeStartElement("Root");
 
         //create_XLS();
-
+        ChannelVideo channel=new ChannelVideo();
         Search search; //делаем запрос
         search = new Search();
         double time_before= System.currentTimeMillis();
