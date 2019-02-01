@@ -19,6 +19,7 @@ import com.google.api.services.samples.youtube.cmdline.Auth;
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.*;
 import com.google.common.collect.Lists;
+import org.apache.commons.collections4.list.TreeList;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
@@ -35,7 +36,7 @@ public class ChannelVideo {
     private static String PROPERTIES_FILENAME = "youtube.properties";
     //private static long NUMBER_OF_VIDEOS_RETURNED;
     public static YouTube youtube;
-
+    public static List <String> main_channels;
     /**
      * Initializes YouTube object to search for videos on YouTube (Youtube.com.google.api.services.samples.youtube.cmdline.data.Search.List). The program
      * then prints the names and thumbnails of each of the videos (only first 50 videos).
@@ -47,15 +48,16 @@ public class ChannelVideo {
     public static List<SearchResult> searchResultList;
     public static String queryTerm;
     public static String apiKey;
-
+    public static Map <String,List<String>> video;
     public ChannelVideo() throws IOException {
 
         // create_XLS();
         //Считывает api ключ пользователя
         Properties properties = new Properties();
-        Map <String,List<PlaylistItem>> data = new HashMap<String, List<PlaylistItem>>();
+        apiKey = properties.getProperty("youtube.apikey");
+        video = new HashMap<String, List<String>>();
         List<String> scopes = Lists.newArrayList("https://www.googleapis.com/auth/youtube.force-ssl");
-
+        main_channels=new TreeList<String>();
         try {
             InputStream in = Search.class.getResourceAsStream("/" + PROPERTIES_FILENAME);
             properties.load(in);
@@ -75,9 +77,25 @@ public class ChannelVideo {
             youtube = new YouTube.Builder(Auth.HTTP_TRANSPORT, Auth.JSON_FACTORY, credential).setApplicationName("youtube-cmdline-search-sample").build();
             //заносим настройки в запрос - API ключ
             apiKey = properties.getProperty("youtube.apikey");
+            main_channels.add("UCRokSp8CGOuQO4R0F1RxRGg");
+           // main_channels.add("UCDBgSA_DZ0NNMtf2_C0zQXA");
+            //main_channels.add("UCY_q9S5SOsIRZNUVrmHB1JQ");
+            //main_channels.add("UC0oLxL8yFsI6KyXdDgnJi4g");
+            //main_channels.add("UCN8NAFrJENowmi2f79gvCjA");
+            //main_channels.add("UC2aSu7cxkw2-icfSrG0p1jg");
             //здесь 6 каналов, в данный момент 1
-            data.put("UCRokSp8CGOuQO4R0F1RxRGg",getVideos("UCRokSp8CGOuQO4R0F1RxRGg"));
-            System.out.println("end");
+            //Белсат
+            video.put("UCRokSp8CGOuQO4R0F1RxRGg",getVideo("UCRokSp8CGOuQO4R0F1RxRGg"));
+            //Гарантий нет
+           // video.put("UCDBgSA_DZ0NNMtf2_C0zQXA",getVideo("UCDBgSA_DZ0NNMtf2_C0zQXA"));
+            //Nexta
+            //video.put("UCY_q9S5SOsIRZNUVrmHB1JQ",getVideo("UCY_q9S5SOsIRZNUVrmHB1JQ"));
+            //Народный репортер
+            //video.put("UC0oLxL8yFsI6KyXdDgnJi4g",getVideo("UC0oLxL8yFsI6KyXdDgnJi4g"));
+            //Покиньте вагон
+            //video.put("UCN8NAFrJENowmi2f79gvCjA",getVideo("UCN8NAFrJENowmi2f79gvCjA"));
+            //Паказуха
+            //video.put("UC2aSu7cxkw2-icfSrG0p1jg",getVideo("UC2aSu7cxkw2-icfSrG0p1jg"));;
 
 
         } catch (GoogleJsonResponseException e) {
@@ -94,46 +112,67 @@ public class ChannelVideo {
     /*
      * Returns a query term (String) from user via the terminal.
      */
-    private static List<PlaylistItem> getVideos(String id) throws IOException {
+    private static List<String> getVideo(String id) throws IOException {
 
 
         YouTube.Channels.List channels = youtube.channels().list("id,snippet,contentDetails");
         channels.setKey(apiKey);
         channels.setId(id);
         List<PlaylistItem> playlistItemList = new ArrayList<PlaylistItem>();
+        List<String> idList = new ArrayList<String>();
         //отправляем запрос на сервер
         ChannelListResponse searchResponse = channels.execute();
 
-        List<Channel> list = searchResponse.getItems();
-        Channel channel = list.get(0);
-        Object c = channel.get("contentDetails");
+        List<Channel> items = searchResponse.getItems();
+        Channel channel = items.get(0);
+        Object contentDetails = channel.get("contentDetails");
 
         ObjectMapper oMapper = new ObjectMapper();
-        Map<String, Object> map = oMapper.convertValue(c, Map.class);
+        Map<String, Object> map = oMapper.convertValue(contentDetails, Map.class);
 
-        Object b = map.get("relatedPlaylists");
-        Map<String, Object> map2 = oMapper.convertValue(b, Map.class);
-        String upl_id = map2.get("uploads").toString();
+        Object relatedPlaylists = map.get("relatedPlaylists");
+        Map<String, Object> uploads = oMapper.convertValue(relatedPlaylists, Map.class);
+        String uploads_id = uploads.get("uploads").toString();
+        //запрос к списку видео
         YouTube.PlaylistItems.List playlistItemRequest =
-                youtube.playlistItems().list("id,contentDetails,snippet");
-
-        playlistItemRequest.setPlaylistId(upl_id);
-        playlistItemRequest.setMaxResults((long)50);
+                youtube.playlistItems().list("id,contentDetails");
+        playlistItemRequest.setPlaylistId(uploads_id);
+        playlistItemRequest.setMaxResults((long)2);
         playlistItemRequest.setFields(
-                "items(contentDetails/videoId,snippet/title,snippet/publishedAt),nextPageToken,pageInfo");
-
+                "items(contentDetails/videoId),nextPageToken,pageInfo");
         String nextToken = "";
         int count=0;
-        do {
+        //do {
             playlistItemRequest.setPageToken(nextToken);
+            //получаем список из 50 видео
             PlaylistItemListResponse playlistItemResult = playlistItemRequest.execute();
-            playlistItemList.addAll(playlistItemResult.getItems());
+            //берем их id для получения информации в дальнейшем
+            Iterator<PlaylistItem> iteratorSearchResults = playlistItemResult.getItems().iterator();
+            while (iteratorSearchResults.hasNext()) {
+                PlaylistItem singleVideo = iteratorSearchResults.next();
+                    String video_id = singleVideo.getContentDetails().getVideoId();
+                    idList.add(video_id);
+            }
             nextToken = playlistItemResult.getNextPageToken();
             count+=playlistItemResult.getItems().size();
-        } while (nextToken != null);
+//        } while (nextToken != null);
 
         System.out.println("всего видео у данного канала:"+count);
-        return playlistItemList;
+        return idList;
+    }
+    private static void get_video_id(Iterator<SearchResult> iteratorSearchResults) {
+        if (!iteratorSearchResults.hasNext()) {
+            //   System.out.println(" There aren't any results for your query.");
+        }
+//перебираем список видео
+        while (iteratorSearchResults.hasNext()) {
+            SearchResult singleVideo = iteratorSearchResults.next();
+            ResourceId rId = singleVideo.getId(); //id видео
+            if (rId.getKind().equals("youtube#video")) {
+                String id = rId.getVideoId();
+                ids.add(id); //здесь берем только id для дальнейшего получения данных
+            }
+        }
     }
 
 }

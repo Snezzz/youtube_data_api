@@ -19,7 +19,12 @@
     <orderEntry type="library" name="xstream-1.4.7" level="project" />
     <orderEntry type="library" name="xmlpull-1.1.3.1" level="project" />
     <orderEntry type="library" exported="" name="com.google.collections:google-collections:1.0" level="project" />
+    <orderEntry type="library" name="youtube_data-0.0.1-jar-with-dependencies" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.6.3" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.6.0" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.6.3" level="project" />
     <orderEntry type="library" name="Maven: com.google.apis:google-api-services-youtube:v3-rev182-1.22.0" level="project" />
+    <orderEntry type="library" name="Maven: org.postgresql:postgresql:42.2.5" level="project" />
     <orderEntry type="library" name="Maven: com.google.apis:google-api-services-youtubeAnalytics:v1-rev63-1.22.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.api-client:google-api-client:1.25.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.oauth-client:google-oauth-client:1.25.0" level="project" />
@@ -29,7 +34,6 @@
     <orderEntry type="library" name="Maven: xmlpull:xmlpull:1.1.3.1" level="project" />
     <orderEntry type="library" name="Maven: xpp3:xpp3_min:1.1.4c" level="project" />
     <orderEntry type="library" name="Maven: com.google.http-client:google-http-client-jackson2:1.20.0" level="project" />
-    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.1.3" level="project" />
     <orderEntry type="library" name="Maven: com.google.http-client:google-http-client:1.25.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.code.findbugs:jsr305:3.0.2" level="project" />
     <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpclient:4.5.5" level="project" />
@@ -43,15 +47,6 @@
     <orderEntry type="library" name="Maven: org.mortbay.jetty:jetty:6.1.26" level="project" />
     <orderEntry type="library" name="Maven: org.mortbay.jetty:jetty-util:6.1.26" level="project" />
     <orderEntry type="library" name="Maven: org.mortbay.jetty:servlet-api:2.5-20081211" level="project" />
-    <orderEntry type="module-library">
-      <library name="Maven: google-collections-1.0-rc2:google-collections-1.0-rc2:1.0-rc2">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/google-collections-1.0-rc2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="Maven: org.gephi:gephi-toolkit:0.9.1" level="project" />
     <orderEntry type="library" name="Maven: org.netbeans.modules:org-netbeans-modules-masterfs:RELEASE81" level="project" />
     <orderEntry type="library" name="Maven: org.netbeans.api:org-netbeans-modules-queries:RELEASE81" level="project" />
@@ -105,7 +100,6 @@
     <orderEntry type="library" name="Maven: org.gephi:db-drivers:0.9.1" level="project" />
     <orderEntry type="library" name="Maven: org.xerial:sqlite-jdbc:3.8.11.1" level="project" />
     <orderEntry type="library" name="Maven: mysql:mysql-connector-java:5.1.36" level="project" />
-    <orderEntry type="library" name="Maven: org.postgresql:postgresql:9.4-1202-jdbc42" level="project" />
     <orderEntry type="library" name="Maven: org.gephi:io-importer-api:0.9.1" level="project" />
     <orderEntry type="library" name="Maven: org.gephi:io-processor-plugin:0.9.1" level="project" />
     <orderEntry type="library" name="Maven: org.gephi:appearance-api:0.9.1" level="project" />

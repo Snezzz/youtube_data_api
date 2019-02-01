@@ -1,3 +1,4 @@
+import com.google.api.services.samples.youtube.cmdline.data.ChannelVideo;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -52,7 +53,7 @@ public class createGraph extends JFrame {
 
 
 
-    public createGraph(int n, String title, boolean betweeness, boolean pagerank, boolean module,
+    public createGraph(int n, String title, boolean Default,boolean betweeness, boolean pagerank, boolean module,
                        G2DTarget target) throws IOException {
         super(title);
 
@@ -75,7 +76,7 @@ public class createGraph extends JFrame {
 
         //BETWEENESS_CENTRALITY
         if(betweeness) {
-            filter(graphModel, GraphDistance.BETWEENNESS, workspace);
+         //   filter(graphModel, GraphDistance.BETWEENNESS, workspace);
         }
        else if(pagerank) {
             //PageRank
@@ -308,6 +309,20 @@ public class createGraph extends JFrame {
         directedGraph = graphModel.getDirectedGraph();
         points = new TreeMap<String, Node>();
 
+        //вершина каналов (6 главных)
+        Iterator iter = ChannelVideo.main_channels.iterator();
+        while(iter.hasNext()){
+            int x = rand.nextInt(3000);
+            int y = rand.nextInt(1000);
+            String node_id=iter.next().toString();
+            Node n0 = graphModel.factory().newNode(node_id);
+            n0.setLabel(node_id);
+            n0.setSize(10);
+            n0.setColor(Color.red);
+            n0.setX(x);
+            n0.setY(y);
+            points.put(node_id, n0);
+        }
         //перебираем все вершины и их соседей
         while (iterator.hasNext()) {
             Map.Entry pair = (Map.Entry) iterator.next();
@@ -319,8 +334,8 @@ public class createGraph extends JFrame {
             if (!points.containsKey(node_to)) {
                 n0 = graphModel.factory().newNode(node_to);
                 n0.setLabel(node_to);
-                n0.setSize(3);
-                n0.setColor(Color.red);
+                n0.setSize(1);
+                //n0.setColor(Color.red);
                 n0.setX(x);
                 n0.setY(y);
                 points.put(node_to, n0);
@@ -403,7 +418,7 @@ public class createGraph extends JFrame {
         //применяем функцию к graph - графу, по полученным вершинам - centralityColumn
         Function centralityRanking = appearanceModel.getNodeFunction(graph, centralityColumn, RankingNodeSizeTransformer.class);
         //объявляем объект по настройке трансформации и задаем настройки
-        RankingNodeSizeTransformer centralityTransformer = (RankingNodeSizeTransformer) centralityRanking.getTransformer();
+        RankingNodeSizeTransformer centralityTransformer = centralityRanking.getTransformer();
         centralityTransformer.setMinSize(3);
         centralityTransformer.setMaxSize(20);
         //применяем изменение внешнего вида для нашей модели
@@ -441,7 +456,7 @@ public class createGraph extends JFrame {
                 Lookup.getDefault().lookup(PreviewController.class);
         PreviewModel previewModel = previewController.getModel();
         //настройки
-       // previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE); //отображение id вершин
+        previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE); //отображение id вершин
         previewModel.getProperties().putValue(PreviewProperty.EDGE_LABEL_FONT,previewModel.getProperties().getFontValue(PreviewProperty.NODE_LABEL_FONT).deriveFont(8));
         previewModel.getProperties().putValue(PreviewProperty.SHOW_EDGE_LABELS, Boolean.TRUE); //отображение id вершин
         previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, Boolean.FALSE);

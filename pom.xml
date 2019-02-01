@@ -40,7 +40,11 @@
             <artifactId>google-api-services-youtube</artifactId>
             <version>${project.youtube.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.2.5</version>
+        </dependency>
         <!-- Required for any code that makes calls to the YouTube Analytics API -->
         <dependency>
             <groupId>com.google.apis</groupId>

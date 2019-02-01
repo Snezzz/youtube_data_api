@@ -5,10 +5,18 @@ import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.*;
 import com.google.gson.Gson;
 import org.apache.commons.collections4.list.TreeList;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.Row;
 import org.gephi.preview.api.G2DTarget;
 import org.gephi.project.api.ProjectController;
 import org.joda.time.Instant;
 import org.openide.util.Lookup;
+
 
 import javax.swing.*;
 import javax.xml.parsers.ParserConfigurationException;
@@ -44,6 +52,7 @@ public class Main {
     private static  Map <String, Map<String,String>> main_nodes_map;
     public static String current_author_id;
     public static Map<String,Integer> comment_count;
+    private static Connection c;
    // private static G2DTarget target1,target2;
     private static int col=0;
     public static G2DTarget target;
@@ -65,24 +74,41 @@ public class Main {
         out.writeStartElement("Root");
 
         //create_XLS();
+
+        //1.сбор id видео с каналов
         ChannelVideo channel=new ChannelVideo();
-        Search search; //делаем запрос
-        search = new Search();
+
+        //Search search; //делаем запрос
+        //search = new Search();
         double time_before= System.currentTimeMillis();
-        List<SearchResult> result = search.searchResultList; //получаем результат
+        //List<SearchResult> result = search.searchResultList; //получаем результат
+
         comments = new HashMap<String, Map<String, Map<String, String>>>();
         ids = new ArrayList<String>();
         data = new HashMap<String, Map<String, String>>();
         nodes_map=new HashMap<String, Map<String, Map<String, String>>>();
-        //если список не пуст, выводим
-        if (result != null) {
-            //1.собираем все id видео из полученного списка для дальнейшего получения данных
-            get_video_id(result.iterator(), Search.queryTerm);
-            YouTube.Videos.List videosListByIdRequest = Search.youtube.videos().list("id,statistics," +
-                    "snippet,recordingDetails");
-            //2.получаем всю необходимую информацию
-            get_info(videosListByIdRequest, comments, Search.apiKey);
+        try {
+            Class.forName("org.postgresql.Driver");
+            c = DriverManager
+                    .getConnection("jdbc:postgresql://localhost:5431/postgres", "postgres", "qwerty");
+            c.setAutoCommit(false);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+        //если список не пуст, выводим
+        //if (result != null) {
+            //1.собираем все id видео из полученного списка для дальнейшего получения данных
+          //  get_video_id(channel.video.iterator());
+        YouTube.Videos.List videosListByIdRequest = ChannelVideo.youtube.videos().list("id,statistics," +
+                    "snippet,recordingDetails");
+        //для каждого канала
+        for(Map.Entry<String,List<String>> entry : channel.video.entrySet()) {
+            //2.получаем всю необходимую информацию о видео
+            get_info(videosListByIdRequest, comments, Search.apiKey,entry.getValue());
+        }
+        //}
         out.writeEndDocument();
         out.close();
         double time_after=System.currentTimeMillis();
@@ -98,6 +124,7 @@ public class Main {
         final JTextField count=new JTextField(2);
         count.setText("1");
         String[] items = {
+                "Default",
                 "Betweeness_centrality",
                 "Page_rank",
                 "Modularity"
@@ -109,6 +136,7 @@ public class Main {
         button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                boolean Default = false;
                 boolean betweeness = false;
                 boolean page_rank=false;
                 boolean modularity=false;
@@ -120,9 +148,12 @@ public class Main {
                     page_rank=true;
                 else  if(type.equals("Modularity"))
                     modularity=true;
+                else{
+                    Default = true;
+                }
                 try {
                     G2DTarget target = null;
-                    new createGraph(k,"",betweeness,page_rank,modularity,target);//создание графа
+                    new createGraph(k,"",Default,betweeness,page_rank,modularity,target);//создание графа
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
@@ -145,7 +176,7 @@ public class Main {
     }
 
     //метод сбора id видео из всего списка = 1 запрос
-    private static void get_video_id(Iterator<SearchResult> iteratorSearchResults, String query) {
+    private static void get_video_id(Iterator<SearchResult> iteratorSearchResults) {
         if (!iteratorSearchResults.hasNext()) {
          //   System.out.println(" There aren't any results for your query.");
         }
@@ -163,15 +194,15 @@ public class Main {
     //2 запрос = сбор всей необходимой информации
     private static void get_info(YouTube.Videos.List videosListByIdRequest, Map<String,
             Map<String, Map<String, String>>> comments,
-                                 String apiKey) throws IOException, XMLStreamException, SQLException {
-        Iterator<String> iter = ids.iterator();
-
+                                 String apiKey,List<String> video) throws IOException, XMLStreamException, SQLException {
+        Iterator<String> iter = video.iterator();
+        int video_col = 0;
         //обращаемся к каждому видео для получения данных
         while (iter.hasNext()) {
             out.writeStartElement("Item");
-             out.writeStartElement("ID");
+            out.writeStartElement("ID");
 
-           // out.writeStartElement("ID");
+            // out.writeStartElement("ID");
             Map<String, Map<String, String>> comments_data = new TreeMap<String, Map<String, String>>();
             //берем данные о каждом видео
             String id = iter.next();
@@ -188,15 +219,21 @@ public class Main {
 
             //собираем все возможные данные по видео
             Map<String, String> map = getInformation(listResponse);
-            test(map.get("title"));
-
+            //исключаем прямые эфиры
+            if(map==null){
+                System.out.println("прямой эфир");
+            }
+            if (map != null){
+                test(map.get("title"));
+            video_col++;
+            /*
             //второй запрос - данные об авторе(канале) данного видео
             YouTube.Channels.List channelsList= Search.youtube.channels().list("statistics,snippet,status,brandingSettings,localizations");
             channelsList.setId(map.get("channel_id"));
             channelsList.setKey(apiKey);
             ChannelListResponse listResponse2 = channelsList.execute();
             getChannelInfo(listResponse2,map);
-
+            */
             out.writeStartElement("Header");
             out.writeCharacters(map.get("title"));
             out.writeEndElement();
@@ -214,8 +251,8 @@ public class Main {
             out.writeCharacters(map.get("confirmed"));
             out.writeEndElement();
             //unixtime
-            Instant instant = Instant.parse( map.get("date") );
-            long millisecondsSinceUnixEpoch = instant.getMillis() ;
+            Instant instant = Instant.parse(map.get("date"));
+            long millisecondsSinceUnixEpoch = instant.getMillis();
             out.writeStartElement("Date");
             out.writeCharacters(String.valueOf(millisecondsSinceUnixEpoch));
             out.writeEndElement();
@@ -225,8 +262,8 @@ public class Main {
             //теги
             out.writeStartElement("Tags");
 
-            Iterator <String> it=tags_away.iterator();
-            while (it.hasNext()){
+            Iterator<String> it = tags_away.iterator();
+            while (it.hasNext()) {
                 out.writeStartElement("Tag");
                 out.writeCharacters(it.next());
                 out.writeEndElement();
@@ -234,65 +271,58 @@ public class Main {
             out.writeEndElement();
 
             out.writeStartElement("Details");
-             out.writeStartElement("Emotions");
-                 out.writeEmptyElement("Emotion");
-                 out.writeAttribute("type","like");
-                 out.writeAttribute("count",map.get("likes_count"));
+            out.writeStartElement("Emotions");
             out.writeEmptyElement("Emotion");
-            out.writeAttribute("type","dislike");
-            out.writeAttribute("count",map.get("dislikes_count"));
+            out.writeAttribute("type", "like");
+            out.writeAttribute("count", map.get("likes_count"));
+            out.writeEmptyElement("Emotion");
+            out.writeAttribute("type", "dislike");
+            out.writeAttribute("count", map.get("dislikes_count"));
             //out.writeEndElement();
             out.writeEndElement();
             out.writeEmptyElement("Views");
-            out.writeAttribute("count",map.get("view_count"));
+            out.writeAttribute("count", map.get("view_count"));
 
             //автор данного видео
-            current_author_id=map.get("channel_id");
-            main_nodes_map=new HashMap<String, Map<String, String>>();
+            current_author_id = map.get("channel_id");
+            main_nodes_map = new HashMap<String, Map<String, String>>();
 
-            comments_count=map.get("comments_count");
-            if(!map.get("comments_count").equals("0")) {
+            comments_count = map.get("comments_count");
+            if (!map.get("comments_count").equals("0")) {
+                // out.writeStartElement("Comments");
+                // out.writeEndElement();
+               String nextPage = "";
+                //перебираем все страницы = следующие запросы
+                do {
+                    CommentThreadListResponse videoCommentsListResponse = ChannelVideo.youtube.commentThreads()
+                            .list("id,snippet").setVideoId(id).setTextFormat("plainText")
+                            .setMaxResults((long) 100).setPageToken(nextPage)
+                            .execute();
+                     getVideoComments(videoCommentsListResponse, id, comments_data, comments, nodes_map, main_nodes_map);
+                    nextPage = videoCommentsListResponse.getNextPageToken();
+                }
+                while (nextPage != null);
+                //заполняем карту данных для удобства
+                //ключ - тот, на кого ссылаются, значение - кто ссылается
+                data.put(id, map);
 
-               CommentThreadListResponse videoCommentsListResponse = Search.youtube.commentThreads()
-                       .list("id,snippet").setVideoId(id).setTextFormat("plainText")
-                       .setMaxResults((long) 100)
-                       .execute();
-              // out.writeStartElement("Comments");
-               // out.writeEndElement();
-              getVideoComments(videoCommentsListResponse, id, comments_data, comments, nodes_map, main_nodes_map);
-               String nextPage = videoCommentsListResponse.getNextPageToken();
+                comments.put(id, comments_data); //ДОБАВЛЯЕМ ВСЕ КОММЕНТАРИИ К ВИДЕО
 
-               //перебираем все страницы = следующие запросы
-               do {
-                   videoCommentsListResponse = Search.youtube.commentThreads()
-                           .list("id,snippet").setVideoId(id).setTextFormat("plainText")
-                           .setPageToken(nextPage)
-                           .setMaxResults((long) 100).execute();
-                   getVideoComments(videoCommentsListResponse, id, comments_data, comments, nodes_map, main_nodes_map);
-                   nextPage = videoCommentsListResponse.getNextPageToken();
-               }
-               while (nextPage != null);
-               //заполняем карту данных для удобства
-               //ключ - тот, на кого ссылаются, значение - кто ссылается
-               data.put(id, map);
-
-               comments.put(id, comments_data); //ДОБАВЛЯЕМ ВСЕ КОММЕНТАРИИ К ВИДЕО
-
-           }
-            else{
+            } else {
                 out.writeEmptyElement("Comments");
-                out.writeAttribute("count",comments_count);
+                out.writeAttribute("count", comments_count);
             }
             //details
             out.writeEndElement();
             //item
             out.writeEndElement();
         }
-
+    }
 
 
         //root
         out.writeEndElement();
+        System.out.println("количество обработанного видео:"+video_col);
         System.out.println(comments.size());
         //сортировка видео по дате выкладывания
         sort(data);
@@ -301,15 +331,15 @@ public class Main {
         //   write(new_map);
 
         //добавление данных о видео в БД
-       // load_data("postgres", "qwerty", new_map, false, null);
+       load_data("postgres", "qwerty", new_map, false, null);
         //загружаем комментарии на базу данных: для каждого видео - отдельный запрос
         FileWriter writer = new FileWriter("example.json");
         writer.write("{");
         Map <String,Integer> video_comments;
         for (Map.Entry<String, Map<String, Map<String, String>>> entry : comments.entrySet()) {
-           // load_data("postgres", "qwerty", entry.getValue(), true, entry.getKey());
-            //video_comments=new HashMap<String, Integer>();
-            //get_comments_count("postgres", "qwerty",entry.getKey(),video_comments);
+            load_data("postgres", "qwerty", entry.getValue(), true, entry.getKey());
+            video_comments=new HashMap<String, Integer>();
+            get_comments_count("postgres", "qwerty",entry.getKey(),video_comments);
             create_json(writer,entry.getValue());
         }
         writer.write("}");
@@ -318,14 +348,9 @@ public class Main {
 
     private static void get_comments_count(String user,String password,String videoID,
                                               Map<String,Integer> map) throws SQLException {
-        Connection c;
         Statement stmt;
         ResultSet resultSet=null;
         try {
-            Class.forName("org.postgresql.Driver");
-            c = DriverManager
-                    .getConnection("jdbc:postgresql://localhost:5431/postgres", user, password);
-            c.setAutoCommit(false);
             System.out.println("-- Opened database successfully");
             String sql;
             stmt = c.createStatement(); //открываем соединение
@@ -339,10 +364,6 @@ public class Main {
                comment_count.put(who_to_whom,
                         Integer.valueOf(resultSet.getString("count")));
             }
-
-
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -351,61 +372,64 @@ public class Main {
     private static Map<String, String> getInformation(VideoListResponse listResponse) {
 
         Video current_video = listResponse.getItems().get(0);
-        String title = current_video.getSnippet().getTitle(); //название видео
-        String author = current_video.getSnippet().get("channelTitle").toString(); //название канала
-        DateTime time = current_video.getSnippet().getPublishedAt();//дата публикации
-        String date = time.toString().substring(0, 19);
-        String tags = "";
-        tags_away=new TreeList();
-        //теги, если есть
-        if (current_video.getSnippet().getTags() != null) {
-            tags = current_video.getSnippet().getTags().toString();
-            tags_away=current_video.getSnippet().getTags();
-        }
-        //System.out.println(current_video.getContentDetails());
-        String description = current_video.getSnippet().getDescription(); //описание видео
-        BigInteger view_count = current_video.getStatistics().getViewCount();//число просмотров
-        //количество лайков
-        BigInteger likes_count = null;
-        if (current_video.getStatistics().getLikeCount() != null) {
-            likes_count = current_video.getStatistics().getLikeCount();
-        }
-        //количество дизлайков
-        BigInteger dislikes_count = null;
-        if (current_video.getStatistics().getDislikeCount() != null) {
-            dislikes_count = current_video.getStatistics().getDislikeCount();
-        }
-        //количество комментариев
-        BigInteger comments_count = null;
-        if (current_video.getStatistics().getCommentCount() != null) {
-            comments_count = current_video.getStatistics().getCommentCount();
-        }
+        if(current_video.getSnippet().getLiveBroadcastContent().equals("none")) {
+            String title = current_video.getSnippet().getTitle(); //название видео
+            String author = current_video.getSnippet().get("channelTitle").toString(); //название канала
+            DateTime time = current_video.getSnippet().getPublishedAt();//дата публикации
+            String date = time.toString().substring(0, 19);
+            String tags = "";
+            tags_away = new TreeList();
+            //теги, если есть
+            if (current_video.getSnippet().getTags() != null) {
+                tags = current_video.getSnippet().getTags().toString();
+                tags_away = current_video.getSnippet().getTags();
+            }
+            //System.out.println(current_video.getContentDetails());
+            String description = current_video.getSnippet().getDescription(); //описание видео
+            BigInteger view_count = current_video.getStatistics().getViewCount();//число просмотров
+            //количество лайков
+            BigInteger likes_count = null;
+            if (current_video.getStatistics().getLikeCount() != null) {
+                likes_count = current_video.getStatistics().getLikeCount();
+            }
+            //количество дизлайков
+            BigInteger dislikes_count = null;
+            if (current_video.getStatistics().getDislikeCount() != null) {
+                dislikes_count = current_video.getStatistics().getDislikeCount();
+            }
+            //количество комментариев
+            BigInteger comments_count = null;
+            if (current_video.getStatistics().getCommentCount() != null) {
+                comments_count = current_video.getStatistics().getCommentCount();
+            }
 //заносим данные в карту
-        Map<String, String> data = new HashMap<String, String>();
-        data.put("title", title);
-        data.put("author", author);
-        data.put("date", date);
-        data.put("description", description);
-        data.put("channel_id", current_video.getSnippet().getChannelId());
-        if (view_count == null)
-            data.put("view_count", "0");
-        else
-            data.put("view_count", view_count.toString());
-        if (likes_count == null)
-            data.put("likes_count", "0");
-        else
-            data.put("likes_count", likes_count.toString());
-        if (dislikes_count == null)
-            data.put("dislikes_count", "0");
-        else
-            data.put("dislikes_count", dislikes_count.toString());
-        if (comments_count == null)
-            data.put("comments_count", "0");
-        else
-            data.put("comments_count", comments_count.toString());
+            Map<String, String> data = new HashMap<String, String>();
+            data.put("title", title);
+            data.put("author", author);
+            data.put("date", date);
+            data.put("description", description);
+            data.put("channel_id", current_video.getSnippet().getChannelId());
+            if (view_count == null)
+                data.put("view_count", "0");
+            else
+                data.put("view_count", view_count.toString());
+            if (likes_count == null)
+                data.put("likes_count", "0");
+            else
+                data.put("likes_count", likes_count.toString());
+            if (dislikes_count == null)
+                data.put("dislikes_count", "0");
+            else
+                data.put("dislikes_count", dislikes_count.toString());
+            if (comments_count == null)
+                data.put("comments_count", "0");
+            else
+                data.put("comments_count", comments_count.toString());
 
-        data.put("tags", tags);
-        return data;
+            data.put("tags", tags);
+            return data;
+        }
+        else return null;
     }
 
     //сбор информации о канале
@@ -486,18 +510,19 @@ public class Main {
                 data.put("author_name", snippet.getAuthorDisplayName());
                 data.put("parent_id", current_author_id);
                 data.put("video_id", id);
+
                 nodes_map.put(author_id, data); //author_id - адрес автора комментария
 
                 //ответы(дополняется map)
-                CommentListResponse commentsListResponse = Search.youtube.comments().list("snippet")
+                CommentListResponse commentsListResponse = ChannelVideo.youtube.comments().list("snippet")
                         .setParentId(videoComment.getId()).execute();
 
                 get_replies(snippet, id, author_id, videoComment.getId(), nodes, map);
 
                 out.writeEndElement();
             }
-
-            nodes.put(current_author_id, nodes_map);
+//все главные комментарии + ответы
+            find(nodes,current_author_id,nodes_map);
 
             //comments
             out.writeEndElement();
@@ -515,7 +540,7 @@ public class Main {
 
         //долго
 
-        CommentListResponse commentsListResponse = Search.youtube.comments().list("snippet")
+        CommentListResponse commentsListResponse = ChannelVideo.youtube.comments().list("snippet")
                 .setParentId(id).execute();
         List<Comment> comments = commentsListResponse.getItems();
 
@@ -528,7 +553,7 @@ public class Main {
         String parent_id=id;
         //String parent_id=comment_author_id;
         if (comments.isEmpty()) {
-            //System.out.println("There aren't comment replies.");
+           // System.out.println("There aren't comment replies.");
         } else {
 //все ответы
             //out.writeStartElement("Answers");
@@ -567,7 +592,6 @@ public class Main {
                 information=new HashMap<String, String>();
 
                //данные о вершине
-
                 information.put("author_id",author_id);
                 information.put("author_name",snippet.getAuthorDisplayName());
                 information.put("parent_id",snippet.getParentId());
@@ -578,24 +602,8 @@ public class Main {
 
             }
             out.writeEndElement();
-            //???????
             //если уже был упомянут данный пользователь(повторный ответ)
-            if(nodes.containsKey(parent_id)){
-                //старые данные
-                Map<String,Map<String,String>> old_data=nodes.get(parent_id);
-                //беребираем все старые данные и проверяем, нет ли еще данного пользователя в
-                //ссылающихся
-              for(Map.Entry<String, Map<String,String>> entry : old_data.entrySet()){
-                  if(help_data.containsKey(entry.getKey())){
-                     continue;
-                  }
-                  //если нет, добавляем данные
-                  help_data.put(entry.getKey(),entry.getValue());
-              }
-            }
-
-            //заносим данные в  коллекцию вершин
-               nodes.put(comment_author_id,help_data);
+            find(nodes,comment_author_id,help_data);
 
         }
        // System.out.println(System.currentTimeMillis());
@@ -707,14 +715,13 @@ public class Main {
     //занесение данных в БД POSTGRESQL
     private static void load_data(String user, String password, Map<String, Map<String, String>> from,
                                   boolean comments, String video_id) {
-        Connection c;
         Statement stmt;
         double i = Math.random();
         try {
-            Class.forName("org.postgresql.Driver");
-            c = DriverManager
-                    .getConnection("jdbc:postgresql://localhost:5431/postgres", user, password);
-            c.setAutoCommit(false);
+          //  Class.forName("org.postgresql.Driver");
+            //c = DriverManager
+              //      .getConnection("jdbc:postgresql://localhost:5431/postgres", user, password);
+            //c.setAutoCommit(false);
             System.out.println("-- Opened database successfully");
             String sql;
             stmt = c.createStatement(); //открываем соединение
@@ -739,37 +746,42 @@ public class Main {
             //заполнение таблицы данных о видео
             else {
                 for (Map.Entry<String, Map<String, String>> entry : from.entrySet()) {
-                    sql = "INSERT INTO postgres.public.videos (video_id,id,video_title,author,publication_date,description,view_count" +
-                            ",likes_count,dislikes_count,comments_count,tags,channel_id,channel_follovers_count," +
-                            "channel_video_count,channel_description) VALUES ('" + entry.getKey() + "'," + i + ",'"
-                            + entry.getValue().get("title") + "','" + entry.getValue().get("author") + "','"
-                            + entry.getValue().get("date") + "','" + entry.getValue().get("description") + "',"
-                            + entry.getValue().get("view_count") + "," + entry.getValue().get("likes_count") + ","
-                            + entry.getValue().get("dislikes_count") + "," + entry.getValue().get("comments_count") + ",'"
-                            + entry.getValue().get("tags") + "' ,'" + entry.getValue().get("channel_id") + "'," +
-                            entry.getValue().get("follower_count") + "," + entry.getValue().get("video_count") + ",'" +
-                            entry.getValue().get("channel_info") + "')";
+
+                    sql="INSERT INTO postgres.public.videos " +
+                                    "(video_id,id,video_title,author,publication_date,description,view_count," +
+                            "likes_count,dislikes_count,comments_count,tags,channel_id,channel_follovers_count," +
+                            "channel_video_count,channel_description) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                    PreparedStatement preparedStatement = c.prepareStatement(sql);
+                    preparedStatement.setString(1,entry.getKey());
+                    preparedStatement.setDouble(2,i);
+                    preparedStatement.setString(3, entry.getValue().get("title"));
+                    preparedStatement.setString(4,entry.getValue().get("author"));
+                    preparedStatement.setString(5,entry.getValue().get("date"));
+                    preparedStatement.setString(6,entry.getValue().get("description"));
+                    preparedStatement.setInt(7,Integer.valueOf(entry.getValue().get("view_count")));
+                    preparedStatement.setInt(8,Integer.valueOf(entry.getValue().get("likes_count")));
+                    preparedStatement.setInt(9,Integer.valueOf(entry.getValue().get("dislikes_count")));
+                    preparedStatement.setInt(10,Integer.valueOf(entry.getValue().get("comments_count")));
+                    preparedStatement.setString(11,entry.getValue().get("tags"));
+                    preparedStatement.setString(12,entry.getValue().get("channel_id"));
+                    preparedStatement.setInt(13,0);
+                    preparedStatement.setInt(14,0);
+                    preparedStatement.setString(15,entry.getValue().get("channel_info"));
                     i++;
-                    stmt.executeUpdate(sql); //заносим данные
+                    preparedStatement.executeUpdate();
                 }
             }
             stmt.close();
             c.commit();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 //запись информации о комментаторах в json
     private static void create_json(FileWriter writer, Map<String, Map<String, String>> map) {
-    Connection c;
     Statement stmt;
     try {
-        Class.forName("org.postgresql.Driver");
-        c = DriverManager
-                .getConnection("jdbc:postgresql://localhost:5431/postgres", "postgres", "qwerty");
-        c.setAutoCommit(false);
+
         System.out.println("-- Opened database successfully");
         String sql;
         stmt = c.createStatement(); //открываем соединение
@@ -798,8 +810,6 @@ public class Main {
         }
 
 
-    } catch (ClassNotFoundException e) {
-        e.printStackTrace();
     } catch (SQLException e) {
         e.printStackTrace();
     } catch (IOException e) {
@@ -807,7 +817,7 @@ public class Main {
     }
 
 }
-/*
+
     private static void create_XLS() throws IOException {
         Connection c;
         Statement stmt;
@@ -817,7 +827,8 @@ public class Main {
         //sheet.autoSizeColumn(1);
         Cell cell;
         HSSFCellStyle style = workbook.createCellStyle();
-        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setAlignment(
+                HorizontalAlignment.CENTER);
 
         Row row;
         int rownum = 0;
@@ -856,7 +867,7 @@ public class Main {
             1.Если мы еще не рассматривали данную вершину, создаем для нее новый список ссылающихся
             Если рассматривали, заполняем предыдущий set смежных вершин
              2.обновляем карту
-
+*/
             String prev="";
             while (rs.next()) {
 
@@ -982,7 +993,7 @@ public class Main {
         workbook.write(outFile);
 
     }
-*/
+
 //выявление тегов из названия видео
     private static void test(String testString) {
         Pattern p = Pattern.compile("\\S+");
@@ -990,6 +1001,29 @@ public class Main {
         while (m.find()) {
             String tag = testString.substring(m.start(), m.end());
             tags_away.add(tag);
+        }
+    }
+
+    //метод, позволяющий корректно составлять граф
+    private static void find(Map<String, Map<String, Map<String, String>>> nodes,String comment_author_id,
+                             Map <String, Map<String,String>> help_data){
+        if(nodes.containsKey(comment_author_id)){
+            //старые данные
+            Map<String,Map<String,String>> old_data=nodes.get(comment_author_id);
+            //беребираем все старые данные и проверяем, нет ли еще данного пользователя в
+            //ссылающихся
+            for(Map.Entry<String, Map<String,String>> entry : help_data.entrySet()){
+                if(old_data.containsKey(entry.getKey())){
+                    continue;
+                }
+                //если нет, добавляем данные
+                old_data.put(entry.getKey(),entry.getValue());
+            }
+            nodes.put(comment_author_id,old_data);
+        }
+        else {
+            //заносим данные в  коллекцию вершин
+            nodes.put(comment_author_id, help_data);
         }
     }
 
