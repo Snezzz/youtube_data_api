@@ -15,7 +15,7 @@
 
 ## Запуск проекта:  
 ### Вариант 1:  
-[Скачайте](https://drive.google.com/file/d/1DkaOATkT42ygZhdJJb05WtF35uutwnXw/view?usp=sharing) готовый билд
+[Скачайте](https://drive.google.com/file/d/1Dliqm6TVPEMTNP4pFhRUwglm-fZi3lEa/view?usp=sharing) готовый билд
 ### Вариант 2:  
 в консоли: ```java -jar target/youtube_data-0.0.1-jar-with-dependencies.jar```
 
