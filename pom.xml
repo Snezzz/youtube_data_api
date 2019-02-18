@@ -135,7 +135,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>Main</mainClass>
+                            <mainClass>SetData</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

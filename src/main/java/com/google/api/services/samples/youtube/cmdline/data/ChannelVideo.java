@@ -37,6 +37,7 @@ public class ChannelVideo {
     //private static long NUMBER_OF_VIDEOS_RETURNED;
     public static YouTube youtube;
     public static List <String> main_channels;
+    public static int max_results = 2;
     /**
      * Initializes YouTube object to search for videos on YouTube (Youtube.com.google.api.services.samples.youtube.cmdline.data.Search.List). The program
      * then prints the names and thumbnails of each of the videos (only first 50 videos).
@@ -77,6 +78,7 @@ public class ChannelVideo {
             youtube = new YouTube.Builder(Auth.HTTP_TRANSPORT, Auth.JSON_FACTORY, credential).setApplicationName("youtube-cmdline-search-sample").build();
             //заносим настройки в запрос - API ключ
             apiKey = properties.getProperty("youtube.apikey");
+
             main_channels.add("UCRokSp8CGOuQO4R0F1RxRGg");
            // main_channels.add("UCDBgSA_DZ0NNMtf2_C0zQXA");
             //main_channels.add("UCY_q9S5SOsIRZNUVrmHB1JQ");
@@ -84,8 +86,9 @@ public class ChannelVideo {
             //main_channels.add("UCN8NAFrJENowmi2f79gvCjA");
             //main_channels.add("UC2aSu7cxkw2-icfSrG0p1jg");
             //здесь 6 каналов, в данный момент 1
+            //video.put("UCLvuyMC43RXmSnpTPjLLSJQ",getVideo("UCLvuyMC43RXmSnpTPjLLSJQ"));
             //Белсат
-            video.put("UCRokSp8CGOuQO4R0F1RxRGg",getVideo("UCRokSp8CGOuQO4R0F1RxRGg"));
+             video.put("UCRokSp8CGOuQO4R0F1RxRGg",getVideo("UCRokSp8CGOuQO4R0F1RxRGg"));
             //Гарантий нет
            // video.put("UCDBgSA_DZ0NNMtf2_C0zQXA",getVideo("UCDBgSA_DZ0NNMtf2_C0zQXA"));
             //Nexta
@@ -137,7 +140,8 @@ public class ChannelVideo {
         YouTube.PlaylistItems.List playlistItemRequest =
                 youtube.playlistItems().list("id,contentDetails");
         playlistItemRequest.setPlaylistId(uploads_id);
-        playlistItemRequest.setMaxResults((long)2);
+        playlistItemRequest.setMaxResults((long)max_results);
+
         playlistItemRequest.setFields(
                 "items(contentDetails/videoId),nextPageToken,pageInfo");
         String nextToken = "";

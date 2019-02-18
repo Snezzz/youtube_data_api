@@ -1,4 +1,3 @@
-import com.google.api.services.samples.youtube.cmdline.data.ChannelVideo;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -26,13 +25,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
-public class createGraph extends JFrame {
+public class GraphCreater extends JFrame {
 
 
     public static DirectedGraph directedGraph;
@@ -53,13 +55,14 @@ public class createGraph extends JFrame {
 
 
 
-    public createGraph(int n, String title, boolean Default,boolean betweeness, boolean pagerank, boolean module,
-                       G2DTarget target) throws IOException {
+    public GraphCreater(int n, String title, boolean Default, boolean betweeness, boolean pagerank, boolean module,
+                        G2DTarget target) throws IOException {
         super(title);
 
         //создание нового проекта
-        Main.pc.newProject();
-        workspace = Main.pc.getCurrentWorkspace();
+        //SetData.pc.newProject();
+        GetData.pc.newProject();
+        workspace = GetData.pc.getCurrentWorkspace();
 
         //модель графа
         GraphModel graphModel = Lookup.getDefault()
@@ -70,13 +73,13 @@ public class createGraph extends JFrame {
 
         //анализ
         get_analysis(graphModel);
-       // write_results();
+        write_results();
         //укладка графа по заданному алгоритму
         stowage("YifanHu",graphModel);
 
         //BETWEENESS_CENTRALITY
         if(betweeness) {
-         //   filter(graphModel, GraphDistance.BETWEENNESS, workspace);
+            filter(graphModel, GraphDistance.BETWEENNESS, workspace);
         }
        else if(pagerank) {
             //PageRank
@@ -190,10 +193,11 @@ public class createGraph extends JFrame {
     private static void write_results() throws IOException {
 
         //xls
-        File myFile_ED = new File("data.xls");
-        FileInputStream inputStream_ED = new FileInputStream(myFile_ED);
+        File myFile_ED = new File("results/data_result.xls");
+        FileOutputStream outputStream = new FileOutputStream(myFile_ED);
+        //FileInputStream inputStream_ED = new FileInputStream(myFile_ED);
 
-        HSSFWorkbook workbook = new HSSFWorkbook(inputStream_ED);
+        HSSFWorkbook workbook = new HSSFWorkbook();
 
         create_XLSlist(workbook,"betweeness_centrality",betweeness_centrality);
         create_XLSlist(workbook,"closeness_centrality",closeness_centrality);
@@ -204,7 +208,9 @@ public class createGraph extends JFrame {
         create_XLSlist(workbook,"hub",hub);
         create_XLSlist(workbook,"WEIGHTEDDEGREE",WEIGHTEDDEGREE);
         create_XLSlist(workbook,"DEGREE",DEGREE);
-
+        workbook.write(outputStream);
+        outputStream.close();
+/*
 //csv
         FileOutputStream os_ED = new FileOutputStream(myFile_ED);
         workbook.write(os_ED);
@@ -218,7 +224,7 @@ public class createGraph extends JFrame {
         create_CSV(hub,"hub");
         create_CSV(WEIGHTEDDEGREE,"WEIGHTEDDEGREE");
         create_CSV(DEGREE,"DEGREE");
-
+*/
     }
     public static void create_CSV(Map <String,Double> from,String file_name) throws IOException {
         Iterator<Map.Entry<String, Double>> entries = from.entrySet().iterator();
@@ -286,9 +292,9 @@ public class createGraph extends JFrame {
             YifanHuLayout layout = new YifanHuLayout(null, new StepDisplacement(1f));
             layout.setGraphModel(graphModel);
             layout.resetPropertiesValues();
-            layout.setOptimalDistance(200f);
+            layout.setOptimalDistance(700f);
             layout.initAlgo();
-            for (int i = 0; i < 200 && layout.canAlgo(); i++) {
+            for (int i = 0; i < 100 && layout.canAlgo(); i++) {
                 layout.goAlgo();
             }
         } else if(type.equals("OpenOrd")) {
@@ -305,12 +311,13 @@ public class createGraph extends JFrame {
     //создание графа
     private static void create(int degree, GraphModel graphModel,DirectedGraph directedGraph, Map<String,Node> points) {
         Random rand = new Random();
-        Iterator iterator = Main.nodes_map.entrySet().iterator();
+       // Iterator iterator = SetData.nodes_map.entrySet().iterator();
+        Iterator iterator = GetData.nodes.entrySet().iterator();
         directedGraph = graphModel.getDirectedGraph();
-        points = new TreeMap<String, Node>();
+         points = new TreeMap<String, Node>();
 
         //вершина каналов (6 главных)
-        Iterator iter = ChannelVideo.main_channels.iterator();
+        /*Iterator iter = ChannelVideo.main_channels.iterator();
         while(iter.hasNext()){
             int x = rand.nextInt(3000);
             int y = rand.nextInt(1000);
@@ -323,6 +330,7 @@ public class createGraph extends JFrame {
             n0.setY(y);
             points.put(node_id, n0);
         }
+        */
         //перебираем все вершины и их соседей
         while (iterator.hasNext()) {
             Map.Entry pair = (Map.Entry) iterator.next();
@@ -334,8 +342,8 @@ public class createGraph extends JFrame {
             if (!points.containsKey(node_to)) {
                 n0 = graphModel.factory().newNode(node_to);
                 n0.setLabel(node_to);
-                n0.setSize(1);
-                //n0.setColor(Color.red);
+                n0.setSize(6);
+                n0.setColor(Color.red);
                 n0.setX(x);
                 n0.setY(y);
                 points.put(node_to, n0);
@@ -345,7 +353,9 @@ public class createGraph extends JFrame {
             directedGraph.addNode(n0);
             //все вершины,ИЗ которых идет дуга на целевые
             Color c = new Color((int) (Math.random() * 0x1000000));
-            Iterator it = Main.nodes_map.get(node_to).entrySet().iterator();
+           // Iterator it = SetData.nodes_map.get(node_to).entrySet().iterator();
+            Iterator it = GetData.nodes.get(node_to).entrySet().iterator();
+
             int size = 0;
             //ссылающиеся вершины
             while (it.hasNext()) {
@@ -357,7 +367,7 @@ public class createGraph extends JFrame {
                     n2 = graphModel.factory().newNode(node_from);
                     n2.setLabel(node_from);
                     n2.setColor(Color.red);
-                    n2.setSize(3);
+                    n2.setSize(6);
                     int x1 = rand.nextInt(3000);
                     int y1 = rand.nextInt(1000);
                     n2.setX(x1);
@@ -367,20 +377,21 @@ public class createGraph extends JFrame {
                     n2 = points.get(node_from);
                 }
                 //дуга
-                Edge e1 = graphModel.factory().newEdge(n2, n0, 0, 1.0, true);
-                e1.setWeight(0.1);
+                Edge e1 = graphModel.factory().newEdge(n2, n0, 0, 2.0, true);
+                e1.setLabel(pair2.getValue().toString());
 
-                if(Main.comment_count.containsKey(node_from+"!"+node_to)){
-                  //  e1.setWeight(Main.comment_count.get(node_from+"!"+node_to));
-                    e1.setLabel(String.valueOf(Main.comment_count.get(node_from+"!"+node_to)));
+                //вес ребра
+                if(GetData.comments_count.containsKey(node_from+"!"+node_to)){
+                    e1.setWeight(GetData.comments_count.get(node_from+"!"+node_to));
+                    e1.setLabel(String.valueOf(GetData.comments_count.get(node_from+"!"+node_to)));
                 }
-                else if(Main.comment_count.containsKey(node_to+"!"+node_from)){
-                   // e1.setWeight(Main.comment_count.get(node_to+"!"+node_from));
-                    e1.setLabel(String.valueOf(Main.comment_count.get(node_to+"!"+node_from)));
+                else if(GetData.comments_count.containsKey(node_to+"!"+node_from)){
+                   e1.setWeight(GetData.comments_count.get(node_to+"!"+node_from));
+                    e1.setLabel(String.valueOf(GetData.comments_count.get(node_to+"!"+node_from)));
                 }
                 else{
-                    System.out.println("нет"+"node_from="+node_from+";node_to="+node_to);
-                }
+                 //   System.out.println("нет"+"node_from="+node_from+";node_to="+node_to);
+               }
                 //добавляем вершину
                 directedGraph.addNode(n2);
                 //добавляем ребро
@@ -455,15 +466,20 @@ public class createGraph extends JFrame {
         PreviewController previewController =
                 Lookup.getDefault().lookup(PreviewController.class);
         PreviewModel previewModel = previewController.getModel();
+
         //настройки
-        previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE); //отображение id вершин
+       // previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE); //отображение id вершин
         previewModel.getProperties().putValue(PreviewProperty.EDGE_LABEL_FONT,previewModel.getProperties().getFontValue(PreviewProperty.NODE_LABEL_FONT).deriveFont(8));
         previewModel.getProperties().putValue(PreviewProperty.SHOW_EDGE_LABELS, Boolean.TRUE); //отображение id вершин
+        previewModel.getProperties().putValue(PreviewProperty.EDGE_LABEL_OUTLINE_SIZE, 40);
+
+        previewModel.getProperties().putValue(PreviewProperty.DIRECTED,
+                Boolean.TRUE);
         previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_PROPORTIONAL_SIZE, Boolean.FALSE);
         previewModel.getProperties().putValue(PreviewProperty.CATEGORY_NODE_LABELS, Boolean.TRUE);
         previewModel.getProperties().putValue(PreviewProperty.BACKGROUND_COLOR,Color.white);
         previewModel.getProperties().putValue(PreviewProperty.EDGE_COLOR,
-                new EdgeColor(Color.BLACK));
+                new EdgeColor(Color.BLUE));
 
         target = (G2DTarget) previewController
                 .getRenderTarget(RenderTarget.G2D_TARGET);
@@ -471,7 +487,6 @@ public class createGraph extends JFrame {
         final PreviewScetch previewSketch = new PreviewScetch(target);
         previewController.render(target);
         previewController.refreshPreview();
-
         //отображение
         JFrame frame=new JFrame();
         frame.setLayout(new BorderLayout());
