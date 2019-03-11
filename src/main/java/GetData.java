@@ -1,12 +1,20 @@
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.thoughtworks.xstream.converters.Converter;
+import com.thoughtworks.xstream.converters.MarshallingContext;
+import com.thoughtworks.xstream.converters.UnmarshallingContext;
+import com.thoughtworks.xstream.io.HierarchicalStreamReader;
+import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.gephi.preview.api.G2DTarget;
 import org.gephi.project.api.ProjectController;
 import org.openide.util.Lookup;
 
 import javax.swing.*;
-import javax.xml.stream.*;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyVetoException;
 import java.io.*;
 import java.sql.*;
 import java.util.*;
@@ -15,34 +23,57 @@ public class GetData {
     public static Connection c;
     static Statement stmt,stmt2;
     static String sql;
-    private static XMLStreamWriter out;
+    private static UnicodeXMLStreamWriter out;
     private static XMLStreamReader in;
+    static boolean cont,cont2 = false;
     public static  Map <String,Map <String, String>> nodes;
     public static Map <String,Integer> comments_count;
+    private static List<String> syncList;
     public static ProjectController pc;
+    static List<DataSet> list;
+    public static Map <String, Object> main_map;
+    static Map<String, Map<String, Object>> comments;
+    static ComboPooledDataSource cpds;
+    static int video_count;
 
-    public static void run() throws SQLException, IOException, XMLStreamException {
+    public GetData() throws FileNotFoundException {
+    }
+
+    public static void run() throws SQLException, IOException, XMLStreamException, InterruptedException {
         comments_count=new HashMap<String, Integer>();
+        cpds = new ComboPooledDataSource();
         //соединение с БД
         connect();
+
+        getConnection();
+        //get_comments_count();
+        double in = System.currentTimeMillis();
         //получение вершин (запрос 1)
         getNodes();
-        getObject();
-
+        get_comments_count();
+        System.out.println("время:"+ (System.currentTimeMillis()-in)/1000);
+        System.out.println(nodes.size());
+        double before = System.currentTimeMillis();
+        //File reader = new File("postgres_public_answers.xml");
+        //XStream magicApi = new XStream();
+        //magicApi.registerConverter(new MapEntryConverter());
+        //magicApi.alias("root", Map.class);
+        //Map<String, String> extractedMap = (Map<String, String>)
+          //      magicApi.fromXML(new FileInputStream(reader));
+      //  getObject();
+   //     create_xml(main_map);
+        double after =  System.currentTimeMillis();
+        System.out.println("ушло времени:"+(after-before)/1000+" с.");
         //построение графа
         pc = Lookup.getDefault().lookup(ProjectController.class);
-        /*try {
-            G2DTarget target = null;
-            new GraphCreater(1,"",true,false,false,false,target);//создание графа
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
-        */
+
         //3.визуализация
         pc = Lookup.getDefault().lookup(ProjectController.class);
-        JFrame menu=new JFrame("SetData");
+        JFrame menu=new JFrame("SetData3");
         //menu.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         final JPanel panel=new JPanel();
+        JLabel label = new JLabel();
+        label.setText("min node degree:");
         final JTextField count=new JTextField(2);
         count.setText("1");
         String[] items = {
@@ -78,17 +109,21 @@ public class GetData {
                     new GraphCreater(k,"",Default,betweeness,page_rank,modularity,target);//создание графа
                 } catch (IOException e1) {
                     e1.printStackTrace();
+                } catch (CloneNotSupportedException e1) {
+                    e1.printStackTrace();
                 }
 
             }
         });
-
+        panel.add(label);
         panel.add(count);
         panel.add(box);
         panel.add(button);
-        menu.add(panel);
 
-        menu.setSize(200,200);
+        menu.add(panel);
+        final JPanel info=new JPanel();
+       // info.
+        menu.setSize(200,150);
         menu.setLocation(400,150);
 
         menu.setVisible(true);
@@ -186,11 +221,38 @@ public class GetData {
         }
         stmt = c.createStatement(); //открываем соединение
     }
+    static void getConnection(){
+        try {
+            cpds.setDriverClass("org.postgresql.Driver" );
+            cpds.setJdbcUrl    ("jdbc:postgresql://localhost:5431/postgres");
+            cpds.setUser       ("postgres");
+            cpds.setPassword   ("qwerty");
+
+            Properties properties = new Properties();
+            properties.setProperty ("user", "postgres");
+            properties.setProperty ("password", "qwerty");
+            properties.setProperty ("useUnicode","true");
+            properties.setProperty ("characterEncoding","UTF8");
+            cpds.setProperties(properties);
+
+            // set options
+            // cpds.setMaxStatements             (180);
+            //cpds.setMaxStatementsPerConnection(180);
+            cpds.setMinPoolSize               ( 1);
+            cpds.setAcquireIncrement          ( 10);
+            cpds.setMaxPoolSize               ( 1000);
+            cpds.setMaxIdleTime               ( 30);
+        } catch (PropertyVetoException e) {
+            e.printStackTrace();
+        }
+    }
     private static void getNodes() throws SQLException {
 
         sql="select parent_id,channel_id,author_id,count(parent_id) from comments\n" +
-                "  join videos on comments.video_id = videos.video_id group by parent_id,channel_id,author_id";
+                "  join videos on comments.video_id = videos.video_id" +
+                " group by parent_id,channel_id,author_id";
         ResultSet rs = stmt.executeQuery(sql);
+
         String parend_id,author_id, count;
         nodes = new HashMap<String, Map<String, String>>();
 
@@ -213,114 +275,48 @@ public class GetData {
         }
 
     }
-    private static void getObject() throws SQLException, IOException, XMLStreamException {
+    private static void getObject() throws SQLException, IOException, XMLStreamException, InterruptedException {
         List<String> video = new LinkedList<String>();
         String sql = "select video_id from videos";
         ResultSet rs = stmt.executeQuery(sql);
         while(rs.next()){
             video.add(rs.getString(1));
         }
-        Map <String, Object> main_map = new LinkedHashMap<String, Object>();
+        video_count=video.size();
+        main_map = new LinkedHashMap<String, Object>();
         //для каждого видео получаем комментарии
-        Iterator it = video.iterator();
-        while (it.hasNext()) {
-            String video_id = it.next().toString();
-            get_comments_count(video_id);
-            Map <String, Object> info = new LinkedHashMap<String, Object>();
-            sql = "select * from videos where video_id='"+video_id+"'";
-            rs = stmt.executeQuery(sql);
-            Map <String, Object> main_details = new LinkedHashMap<String,Object>();
-            //основная часть
-            while(rs.next()) {
-                info.put("ID", video_id);
-                info.put("Header", rs.getString("video_title"));
-                info.put("Body", rs.getString("description"));
-                info.put("Username", rs.getString("author"));
-                info.put("UserID", rs.getString("channel_id"));
-                info.put("Confirmed", "");
-                info.put("Date", rs.getString("publication_date"));
-                get_tags(rs.getString("tags"),info);
-                main_details.put("like",rs.getString("likes_count"));
-                main_details.put("dislike",rs.getString("dislikes_count"));
-                main_details.put("Views",rs.getString("view_count"));
-            }
-            //получили все комментарии для данного видео
-            sql = "select * from comments where video_id = '" + video_id+"' and answer=false";
-            rs = stmt.executeQuery(sql);
-            stmt2 = c.createStatement(); //открываем соединение
-
-
-            Map<String, Map<String,Object>> comments = new LinkedHashMap<String, Map<String, Object>>();
-            Map<String,Object> data;
-            //перебираем каждый комментарий
-            int i=0;
-            while(rs.next()) {
-
-                //System.out.println("comment"+i+":"+rs.getString("real_text"));
-                i++;
-                data = new LinkedHashMap<String, Object>();
-                String username = rs.getString("comment_author");
-                String userID = rs.getString("author_id");
-                String text = rs.getString("real_text");
-                data.put("Username",username);
-                data.put("UserID",userID);
-                data.put("Text",text);
-                sql = "select * from comments where video_id = '" + video_id + "' " +
-                        "and parent_id='" + rs.getString("author_id") + "'";
-                ResultSet resultSet = stmt2.executeQuery(sql);
-
-               //получаем ответы
-                Map <String, Map <String,String>> answers = null;
-                Map <String,String> details = null;
-                answers = new LinkedHashMap<String, Map<String, String>>();
-                    while (resultSet.next()) {
-                        if(!resultSet.getString("author_id").equals("")) {
-                            details = new LinkedHashMap<String, String>();
-                        //кладем данные в details
-                        String Username = resultSet.getString("comment_author");
-                        String UserID = resultSet.getString("author_id");
-                        String Text = resultSet.getString("real_text");
-                        details.put("Username", Username);
-                        details.put("UserID", UserID);
-                        details.put("Text", Text);
-                        //
-                        String comment_id = resultSet.getString("comment_id"); //?
-                        //информация о комментарии
-                        answers.put(comment_id, details);
-                      //  System.out.println(resultSet.getString("author_id"));
-                    }
-
-
-                }
-                //добавляем ответы
-                data.put("Comments",answers);
-                comments.put(rs.getString("comment_id"),data);
-
-            }
-
-            main_details.put("Comments",comments);
-            info.put("Details",main_details);
-            //для каждого видео вносим данные
-            main_map.put(video_id,info);
+        Iterator iterator = video.iterator();
+        while(iterator.hasNext()){
+            String video_id = iterator.next().toString();
+           // get_comments_count(video_id);
         }
-            create_xml(main_map);
-            //check_xml();
-    }
-    private static void check_xml() throws IOException, XMLStreamException {
-        File file = new File("results.xml");
-        InputStream inputStream = new FileInputStream(file);
-        in = XMLInputFactory.newInstance().createXMLStreamReader(new InputStreamReader(inputStream,"utf-8"));
-        String text = in.getText();
-        String result = SetData.preparing(text);
-        FileWriter fileWriter = new FileWriter(file);
-        fileWriter.write(result);
-        fileWriter.close();
+        //Queue<CommentThread > comment = new ArrayDeque<CommentThread >();
+        //        //каждый комментарий
+               cont = false;
+
+            syncList = Collections.synchronizedList(video);
+            for (int i = 0; i < 5; i++) {
+                Thread myThread = new Thread(new MyThread(), "Поток" + i);
+                myThread.start();
+            }
+            Thread.currentThread().join(1000);
+            while (!cont) {
+                Thread.currentThread().join(1000);
+            }
+
+            //create_xml(main_map);
 
     }
+
     private static void create_xml( Map <String, Object> map)throws IOException, XMLStreamException {
         OutputStream outputStream = new FileOutputStream(new File("results.xml"));
-        out = XMLOutputFactory.newInstance().createXMLStreamWriter(
-                new OutputStreamWriter(outputStream, "utf-8"));
+
+      //  out = XMLOutputFactory.newInstance().createXMLStreamWriter(
+        //        new OutputStreamWriter(outputStream, "utf-8"));
+
+        OutputStreamWriter outWriter = new OutputStreamWriter(outputStream,"utf-8");
+
+        out = UnicodeXMLStreamWriter.newInstance(outWriter);
         out.writeStartDocument();
         out.writeStartElement("Root");
         for(Map.Entry<String,Object> entry : map.entrySet()) {
@@ -330,15 +326,22 @@ public class GetData {
 
             for(Map.Entry<String,Object> entry2 : value.entrySet()) {
                 if(entry2.getKey().equals("Tags")){
-                    out.writeStartElement(entry2.getKey());
-                   ArrayList res = oMapper.convertValue(entry2.getValue(), ArrayList.class);
-                   Iterator it = res.iterator();
-                   while(it.hasNext()){
-                       out.writeStartElement("Tag");
-                       out.writeCharacters(it.next().toString());
-                       out.writeEndElement();
-                   }
-                   out.writeEndElement();
+                    if(!(entry2.getValue().toString().equals(""))) {
+                        out.writeStartElement(entry2.getKey());
+                        ArrayList res = oMapper.convertValue(entry2.getValue(), ArrayList.class);
+                        Iterator it = res.iterator();
+                        while (it.hasNext()) {
+                            out.writeStartElement("Tag");
+
+                            out.writeCharacters(it.next().toString());
+                            out.writeEndElement();
+                        }
+                        out.writeEndElement();
+                    }
+                    else{
+                        out.writeEmptyElement("Tags");
+                    }
+
                 }
                 else if (!entry2.getKey().equals("Details")) {
                     out.writeStartElement(entry2.getKey());
@@ -374,10 +377,7 @@ public class GetData {
                                 out.writeStartElement("Comment");
                                 Map<String, Object> data = oMapper.convertValue(entry3.getValue(), Map.class);
                                 for (Map.Entry<String, Object> entry5 : data.entrySet()) {
-                                    if((entry5.getKey().equals("Text"))&&(entry5.getValue().toString()
-                                            .equals("\uD83D\uDD1D\uD83D\uDD1D\uD83D\uDD1D"))){
-                                        System.out.println(String.valueOf(entry5.getValue()));
-                                    }
+
                                     if (!entry5.getKey().equals("Comments")) {
                                         out.writeStartElement(entry5.getKey());
 
@@ -404,7 +404,7 @@ public class GetData {
                     out.writeEndElement(); //details
                 }
             }
-            System.out.println("");
+
             out.writeEndElement(); //item
         }
         out.writeEndElement();
@@ -412,28 +412,37 @@ public class GetData {
         out.close();
 
     }
-    private static void get_comments_count(String videoID) throws SQLException {
+    private static void get_comments_count() throws SQLException {
         Statement stmt;
         ResultSet resultSet=null;
         try {
-            System.out.println("-- Opened database successfully");
+            //System.out.println("-- Opened database successfully");
             String sql;
             stmt = c.createStatement(); //открываем соединение
-            sql="select comment_author,author_id,parent_id,count(parent_id)" +
-                    " from comments where video_id='"+videoID+"'" +
-                    " group by comment_author,author_id,parent_id";
+           // sql="select comment_author,author_id,parent_id,count(parent_id)" +
+             //       " from comments where video_id='"+videoID+"'" +
+               //     " group by comment_author,author_id,parent_id";
+            sql = "select * from weight";
             resultSet=stmt.executeQuery(sql);
             while (resultSet.next()){
                 String who_to_whom=resultSet.getString("author_id")+"!"
                         +resultSet.getString("parent_id");
-                comments_count.put(who_to_whom,
-                        Integer.valueOf(resultSet.getString("count")));
+                if(comments_count.containsKey(who_to_whom)){
+                  //  System.out.println("есть");
+                    int old_val = comments_count.get(who_to_whom);
+                    int new_val = old_val + Integer.valueOf(resultSet.getString("count"));
+                    comments_count.put(who_to_whom, new_val);
+                }
+               else {
+                    comments_count.put(who_to_whom,
+                            Integer.valueOf(resultSet.getString("count")));
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
-        private static void put(ObjectMapper oMapper,Map<String,Object> map,String name) throws XMLStreamException {
+    private static void put(ObjectMapper oMapper,Map<String,Object> map,String name) throws XMLStreamException {
             for(Map.Entry<String,Object> entry : map.entrySet()) {
                 out.writeStartElement(name);
                 Map<String, Object> value = oMapper.convertValue(entry.getValue(), Map.class);
@@ -448,7 +457,292 @@ public class GetData {
 
         }
         private static void get_tags(String from,Map <String, Object> to){
-            String [] tags = from.substring(1,from.length()-1).split(",");
-            to.put("Tags",tags);
+            if(from.contains(",")) {
+                String[] tags = from.substring(1, from.length() - 1).split(",");
+                to.put("Tags",tags);
+            }
+            else{
+                to.put("Tags","");
+            }
+
         }
+        static int global_i;
+
+
+    static class MyThread implements Runnable {
+        String currentVideo;
+        Statement st;
+        Map<String, Map<String, Object>> videoComments;
+        @Override
+        public void run() {
+            while (syncList.size() != 0) {
+
+                synchronized (syncList) {
+                    currentVideo = getCurrentVideo();
+                }
+                if (currentVideo != null) {
+                    double in = System.currentTimeMillis();
+                    System.out.println(Thread.currentThread().getName() + " взял " + currentVideo + " видео ("+global_i+")");
+
+                    try {
+                        get();
+                        global_i++;
+                        double out = System.currentTimeMillis();
+                      //  System.out.println("ушло " + (out - in) / 1000 + " секунд");
+                        Thread.sleep(1000);
+                        if (main_map.size()==video_count) {
+                            //  System.out.println("продолжаю");
+                            cont = true;
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (XMLStreamException e) {
+                        e.printStackTrace();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        }
+
+        public synchronized String getCurrentVideo() {
+            videoComments = new LinkedHashMap<String, Map<String, Object>>();
+            if (syncList.size() > 0) {
+                return syncList.remove(0);
+            } else return null;
+        }
+
+        private void get() throws IOException, XMLStreamException, SQLException, InterruptedException {
+            st = c.createStatement();
+          //  get_comments_count(currentVideo);
+            //get_comments_count(video_id);
+            Map<String, Object> info = new LinkedHashMap<String, Object>();
+            String sql = "select * from videos where video_id='" + currentVideo + "'";
+            ResultSet rs = st.executeQuery(sql);
+            Map<String, Object> main_details = new LinkedHashMap<String, Object>();
+            //основная часть
+            while (rs.next()) {
+                info.put("ID", currentVideo);
+                info.put("Header", rs.getString("video_title"));
+                info.put("Body", rs.getString("description"));
+                info.put("Username", rs.getString("author"));
+                info.put("UserID", rs.getString("channel_id"));
+                info.put("Confirmed", "");
+                info.put("Date", rs.getString("publication_date"));
+                get_tags(rs.getString("tags"), info);
+                main_details.put("like", rs.getString("likes_count"));
+                main_details.put("dislike", rs.getString("dislikes_count"));
+                main_details.put("Views", rs.getString("view_count"));
+            }
+            //получили все комментарии для данного видео
+            sql = "select * from comments where video_id = '" + currentVideo + "' and answer=false";
+            rs = st.executeQuery(sql);
+            cont2 = false;
+           // Map<String, Object> data;
+            //перебираем каждый комментарий
+            int i = 0;
+            List<DataSet> listData = new LinkedList<DataSet>();
+        double in = System.currentTimeMillis();
+            while (rs.next()) {
+                String username = rs.getString("comment_author");
+                String userID = rs.getString("author_id");
+                String text = rs.getString("real_text");
+                String video_id = currentVideo;
+                String comment_id = rs.getString("comment_id");
+                DataSet ds = new DataSet(video_id, comment_id, username, userID, text);
+                listData.add(ds);
+            }
+        //    System.out.println("на сбор комментов:"+(System.currentTimeMillis()-in)/1000);
+            list = Collections.synchronizedList(listData);
+            System.out.println("количество комментариев "+currentVideo+" ="+list.size());
+            int size = list.size();
+            for (int k = 0; k < 50 ; k++) {
+                Thread myThread = new Thread(new MyCommentThread(videoComments,size),"Подпоток "+currentVideo);
+                myThread.start();
+            }
+            Thread.currentThread().join(100);
+            while (!cont2) {
+                Thread.currentThread().join(100);
+            }
+
+            main_details.put("Comments", videoComments);
+            info.put("Details", main_details);
+            //для каждого видео вносим данные
+            main_map.put(currentVideo, info);
+        }
+    }
+
+
+
+    static class MyCommentThread implements Runnable {
+
+        Connection connection;
+        DataSet currentComment;
+        Map<String, Map<String, Object>> videoComments;
+        int size;
+
+        MyCommentThread(Map<String, Map<String, Object>> comments,int size) {
+            this.videoComments = comments;
+            this.size = size;
+        }
+
+        @Override
+        public void run() {
+
+            while (list.size() != 0) {
+
+                synchronized (list) {
+                    currentComment = getCurrentComment();
+                }
+                if (currentComment != null) {
+                        double in = System.currentTimeMillis();
+                       // System.out.println(Thread.currentThread().getName() + " взял " + currentComment.comment_id + " комментарий");
+                        // Получить подключение из пула
+                    try {
+                        connection = cpds.getConnection();
+                    //    System.out.println("closeConnection : idleConnections = " + cpds.getNumIdleConnections() +
+                      //          ", busyConnections = " + cpds.getNumBusyConnections());
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        get();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (XMLStreamException e) {
+                        e.printStackTrace();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                    double out = System.currentTimeMillis();
+                //    System.out.println("у потока "+Thread.currentThread().getName()+ "ушло " + (out - in) / 1000 + " секунд");
+                    if(videoComments.size()==size){
+                        cont2=true;
+                    }
+
+                    // "Вернуть" (закрыть) подключение
+                    try {
+                        connection.close();
+                     //   System.out.println("closeConnection : idleConnections = " + cpds.getNumIdleConnections() +
+                       //         ", busyConnections = " + cpds.getNumBusyConnections());
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+        }
+            private void get () throws IOException, XMLStreamException, SQLException {
+                Map<String, Object> data = new LinkedHashMap<String, Object>();
+                data.put("Username", currentComment.username);
+                data.put("UserID", currentComment.userID);
+                data.put("Text", currentComment.text);
+                String sql = "select * from answers where video_id = '" + currentComment.videoID + "' " +
+                        "and parent_id='" + currentComment.userID + "'";
+                double in = System.currentTimeMillis();
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(sql);
+              //  System.out.println("затрачено на ответы:" + (System.currentTimeMillis()-in)/1000);
+                //получаем ответы
+                Map<String, Map<String, String>> answers = null;
+                Map<String, String> details = null;
+                //ответы
+                answers = new LinkedHashMap<String, Map<String, String>>();
+
+                while (resultSet.next()) {
+                    if (!resultSet.getString("author_id").equals("")) {
+                        details = new LinkedHashMap<String, String>();
+                        //кладем данные в details
+                        String Username = resultSet.getString("comment_author");
+                        String UserID = resultSet.getString("author_id");
+                        String Text = resultSet.getString("real_text");
+                        details.put("Username", Username);
+                        details.put("UserID", UserID);
+                        details.put("Text", Text);
+                        //
+                        String comment_id = resultSet.getString("comment_id"); //?
+                        //информация о комментарии
+                        answers.put(comment_id, details);
+                        //  System.out.println(resultSet.getString("author_id"));
+                    }
+
+                }
+              //  System.out.println("затрачено "+(System.currentTimeMillis()-in)/1000);
+                //добавляем ответы
+                data.put("Comments", answers);
+
+                videoComments.put(currentComment.comment_id, data);
+            }
+        public synchronized DataSet getCurrentComment() {
+            if (list.size() > 0) {
+                return list.remove(0);
+            } else return null;
+        }
+    }
+
+
+        public static class DataSet {
+            String username, userID, text, videoID, comment_id;
+
+            DataSet(String videoID, String comment_id, String username, String userID, String text) {
+                this.videoID = videoID;
+                this.comment_id = comment_id;
+                this.username = username;
+                this.text = text;
+                this.userID = userID;
+            }
+        }
+
+    public static class MapEntryConverter implements Converter {
+
+        public boolean canConvert(Class clazz) {
+            return AbstractMap.class.isAssignableFrom(clazz);
+        }
+
+
+        @Override
+        public void marshal(Object value, HierarchicalStreamWriter writer, MarshallingContext context) {
+
+            AbstractMap map = (AbstractMap) value;
+            for (Object obj : map.entrySet()) {
+                Map.Entry entry = (Map.Entry) obj;
+                writer.startNode(entry.getKey().toString());
+                Object val = entry.getValue();
+                if ( null != val ) {
+                    writer.setValue(val.toString());
+                }
+                writer.endNode();
+            }
+
+        }
+
+
+        @Override
+        public Object unmarshal(HierarchicalStreamReader reader, UnmarshallingContext context) {
+
+            Map<String, String> map = new HashMap<String, String>();
+
+            while(reader.hasMoreChildren()) {
+                reader.moveDown();
+
+                String key = reader.getNodeName(); // nodeName aka element's name
+                String value = reader.getValue();
+                map.put(key, value);
+
+                reader.moveUp();
+            }
+
+            return map;
+        }
+    }
+
+
 }

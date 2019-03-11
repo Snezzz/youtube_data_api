@@ -23,7 +23,7 @@ public class Main {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    SetData.run();
+                    SetData3.run();
                 } catch (SQLException e1) {
                     e1.printStackTrace();
                 } catch (IOException e1) {
@@ -31,6 +31,8 @@ public class Main {
                 } catch (XMLStreamException e1) {
                     e1.printStackTrace();
                 } catch (ParserConfigurationException e1) {
+                    e1.printStackTrace();
+                } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
             }
@@ -45,6 +47,8 @@ public class Main {
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 } catch (XMLStreamException e1) {
+                    e1.printStackTrace();
+                } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
             }

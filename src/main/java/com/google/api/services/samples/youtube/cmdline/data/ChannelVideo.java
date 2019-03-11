@@ -37,7 +37,7 @@ public class ChannelVideo {
     //private static long NUMBER_OF_VIDEOS_RETURNED;
     public static YouTube youtube;
     public static List <String> main_channels;
-    public static int max_results = 2;
+    public static int max_results = 50;
     /**
      * Initializes YouTube object to search for videos on YouTube (Youtube.com.google.api.services.samples.youtube.cmdline.data.Search.List). The program
      * then prints the names and thumbnails of each of the videos (only first 50 videos).
@@ -79,26 +79,27 @@ public class ChannelVideo {
             //заносим настройки в запрос - API ключ
             apiKey = properties.getProperty("youtube.apikey");
 
-            main_channels.add("UCRokSp8CGOuQO4R0F1RxRGg");
-           // main_channels.add("UCDBgSA_DZ0NNMtf2_C0zQXA");
-            //main_channels.add("UCY_q9S5SOsIRZNUVrmHB1JQ");
-            //main_channels.add("UC0oLxL8yFsI6KyXdDgnJi4g");
-            //main_channels.add("UCN8NAFrJENowmi2f79gvCjA");
-            //main_channels.add("UC2aSu7cxkw2-icfSrG0p1jg");
+           // main_channels.add("UCRokSp8CGOuQO4R0F1RxRGg");
+            main_channels.add("UCDBgSA_DZ0NNMtf2_C0zQXA");
+            main_channels.add("UCY_q9S5SOsIRZNUVrmHB1JQ");
+
+            main_channels.add("UC0oLxL8yFsI6KyXdDgnJi4g");
+            main_channels.add("UCN8NAFrJENowmi2f79gvCjA");
+            main_channels.add("UC2aSu7cxkw2-icfSrG0p1jg");
             //здесь 6 каналов, в данный момент 1
-            //video.put("UCLvuyMC43RXmSnpTPjLLSJQ",getVideo("UCLvuyMC43RXmSnpTPjLLSJQ"));
+          //  video.put("UCLvuyMC43RXmSnpTPjLLSJQ",getVideo("UCLvuyMC43RXmSnpTPjLLSJQ"));
             //Белсат
              video.put("UCRokSp8CGOuQO4R0F1RxRGg",getVideo("UCRokSp8CGOuQO4R0F1RxRGg"));
             //Гарантий нет
-           // video.put("UCDBgSA_DZ0NNMtf2_C0zQXA",getVideo("UCDBgSA_DZ0NNMtf2_C0zQXA"));
+            video.put("UCDBgSA_DZ0NNMtf2_C0zQXA",getVideo("UCDBgSA_DZ0NNMtf2_C0zQXA"));
             //Nexta
-            //video.put("UCY_q9S5SOsIRZNUVrmHB1JQ",getVideo("UCY_q9S5SOsIRZNUVrmHB1JQ"));
+            video.put("UCY_q9S5SOsIRZNUVrmHB1JQ",getVideo("UCY_q9S5SOsIRZNUVrmHB1JQ"));
             //Народный репортер
-            //video.put("UC0oLxL8yFsI6KyXdDgnJi4g",getVideo("UC0oLxL8yFsI6KyXdDgnJi4g"));
+            video.put("UC0oLxL8yFsI6KyXdDgnJi4g",getVideo("UC0oLxL8yFsI6KyXdDgnJi4g"));
             //Покиньте вагон
-            //video.put("UCN8NAFrJENowmi2f79gvCjA",getVideo("UCN8NAFrJENowmi2f79gvCjA"));
+            video.put("UCN8NAFrJENowmi2f79gvCjA",getVideo("UCN8NAFrJENowmi2f79gvCjA"));
             //Паказуха
-            //video.put("UC2aSu7cxkw2-icfSrG0p1jg",getVideo("UC2aSu7cxkw2-icfSrG0p1jg"));;
+            video.put("UC2aSu7cxkw2-icfSrG0p1jg",getVideo("UC2aSu7cxkw2-icfSrG0p1jg"));;
 
 
         } catch (GoogleJsonResponseException e) {
@@ -143,10 +144,11 @@ public class ChannelVideo {
         playlistItemRequest.setMaxResults((long)max_results);
 
         playlistItemRequest.setFields(
-                "items(contentDetails/videoId),nextPageToken,pageInfo");
+                "items(contentDetails/videoId,contentDetails/videoPublishedAt),nextPageToken,pageInfo");
         String nextToken = "";
         int count=0;
-        //do {
+        boolean stop=false;
+        do {
             playlistItemRequest.setPageToken(nextToken);
             //получаем список из 50 видео
             PlaylistItemListResponse playlistItemResult = playlistItemRequest.execute();
@@ -155,11 +157,23 @@ public class ChannelVideo {
             while (iteratorSearchResults.hasNext()) {
                 PlaylistItem singleVideo = iteratorSearchResults.next();
                     String video_id = singleVideo.getContentDetails().getVideoId();
-                    idList.add(video_id);
+                    if(singleVideo.getContentDetails().getVideoPublishedAt().toString().contains("2019")){
+                        continue;
+                    }
+                    else if(singleVideo.getContentDetails().getVideoPublishedAt().toString().contains("2017")){
+                       stop = true;
+                        break;
+                      }
+                   else {
+                        idList.add(video_id);
+                    }
             }
             nextToken = playlistItemResult.getNextPageToken();
+            if(stop){
+                nextToken = null;
+            }
             count+=playlistItemResult.getItems().size();
-//        } while (nextToken != null);
+        } while (nextToken != null);
 
         System.out.println("всего видео у данного канала:"+count);
         return idList;
