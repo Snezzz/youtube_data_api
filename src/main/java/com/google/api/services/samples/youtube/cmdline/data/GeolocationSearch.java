@@ -40,7 +40,7 @@ import java.util.Properties;
  * This sample lists videos that are associated with a particular keyword and are in the radius of
  *   particular geographic coordinates by:
  *
- * 1. Searching videos with "youtube.search.list" method and setting "type", "q", "location" and
+ * 1. Searching videos with "youtube.search.list" method and setting "type", "Main", "location" and
  *   "locationRadius" parameters.
  * 2. Retrieving location details for each video with "youtube.videos.list" method and setting
  *   "id" parameter to comma separated list of video IDs in search result.

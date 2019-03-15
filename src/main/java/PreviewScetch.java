@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 import org.gephi.preview.api.G2DTarget;
 import org.gephi.preview.api.PreviewController;
 import org.gephi.preview.api.PreviewMouseEvent;
@@ -26,22 +20,20 @@ public class PreviewScetch extends JPanel implements MouseListener, MouseWheelLi
     private static final int WHEEL_TIMER = 500;
     //Data
     private final PreviewController previewController;
-    private G2DTarget target;
+    private final G2DTarget target;
     //Geometry
-    private final Vector ref=new Vector();
-    private final Vector lastMove=new Vector();
+    private final Vector ref = new Vector();
+    private final Vector lastMove = new Vector();
     //Utils
-    private final RefreshLoop refreshLoop= new RefreshLoop();
+    private final RefreshLoop refreshLoop = new RefreshLoop();
     private Timer wheelTimer;
     private boolean inited;
     private final boolean isRetina;
-    public static int w=0;
+
     public PreviewScetch(G2DTarget target) {
-        this.target=target;
+        this.target = target;
         previewController = Lookup.getDefault().lookup(PreviewController.class);
         isRetina = false;
-        System.out.println("созданный target="+this.target);
-        System.out.println("previewC="+ previewController);
     }
 
     @Override
@@ -58,10 +50,11 @@ public class PreviewScetch extends JPanel implements MouseListener, MouseWheelLi
 
         int width = (int) (getWidth() * (isRetina ? 2.0 : 1.0));
         int height = (int) (getHeight() * (isRetina ? 2.0 : 1.0));
+
         if (target.getWidth() != width || target.getHeight() != height) {
             target.resize(width, height);
         }
-        //System.out.println("paint+"+target.getImage().toString());
+
         g.drawImage(target.getImage(), 0, 0, getWidth(), getHeight(), this);
     }
 
@@ -69,11 +62,8 @@ public class PreviewScetch extends JPanel implements MouseListener, MouseWheelLi
         target.setMoving(moving);
     }
 
-    //http://qaru.site/questions/6378082/how-to-develop-interactive-graph-using-gephi-toolkit
     @Override
     public void mouseClicked(MouseEvent e) {
-
-        System.out.println("current_target="+target);
         if (previewController.sendMouseEvent(buildPreviewMouseEvent(e, PreviewMouseEvent.Type.CLICKED))) {
             refreshLoop.refreshSketch();
         }
@@ -84,6 +74,7 @@ public class PreviewScetch extends JPanel implements MouseListener, MouseWheelLi
         previewController.sendMouseEvent(buildPreviewMouseEvent(e, PreviewMouseEvent.Type.PRESSED));
         ref.set(e.getX(), e.getY());
         lastMove.set(target.getTranslate());
+
         refreshLoop.refreshSketch();
     }
 
@@ -98,6 +89,7 @@ public class PreviewScetch extends JPanel implements MouseListener, MouseWheelLi
 
     @Override
     public void mouseEntered(MouseEvent e) {
+
     }
 
     @Override
@@ -138,16 +130,17 @@ public class PreviewScetch extends JPanel implements MouseListener, MouseWheelLi
             trans.mult(isRetina ? 2f : 1f);
             trans.div(target.getScaling()); // ensure const. moving speed whatever the zoom is
             trans.add(lastMove);
+
             refreshLoop.refreshSketch();
         }
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
+
     }
 
     public void zoomPlus() {
-
         target.setScaling(target.getScaling() * 2f);
         refreshLoop.refreshSketch();
     }
